@@ -153,12 +153,30 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+        .menu-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(2, 6, 23, 0.58);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            z-index: 90;
+        }
         .menu-panel {
-            position: absolute;
-            top: calc(100% + 10px);
+            position: fixed;
+            top: 0;
             left: 0;
-            min-width: 220px;
-            z-index: 40;
+            bottom: 0;
+            width: min(320px, 86vw);
+            padding: 24px 18px;
+            border-right: 1px solid rgba(148, 163, 184, 0.16);
+            background: rgba(15, 23, 42, 0.94);
+            box-shadow: 24px 0 80px rgba(2, 6, 23, 0.55);
+            transform: translateX(-100%);
+            transition: transform 0.28s ease;
+            z-index: 100;
+        }
+        .menu-panel.open {
+            transform: translateX(0);
         }
         .switch {
             position: relative;
@@ -288,7 +306,7 @@
             <div class="space-y-6">
                 <div>
                     <label class="block text-sm font-medium text-slate-400 mb-2">Your Name</label>
-                    <input type="text" id="profile-name-input" placeholder="Dhairya"
+                    <input type="text" id="profile-name-input" placeholder=""
                         class="w-full bg-slate-800/50 border border-slate-700/50 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all text-slate-200">
                 </div>
 
@@ -317,22 +335,35 @@
 
     <!-- DASHBOARD SECTION -->
     <div id="dashboard-section" class="hide min-h-screen flex flex-col p-4 md:p-8 max-w-7xl mx-auto space-y-6 fade-in">
+        <div id="menu-overlay" class="menu-overlay hide" onclick="closeMenu()"></div>
+        <div id="menu-panel" class="menu-panel hide">
+            <div class="flex items-center justify-between gap-4 mb-8">
+                <div>
+                    <p class="text-[10px] uppercase tracking-[0.3em] text-slate-500">Navigate</p>
+                    <h3 class="text-2xl font-bold mt-2">HabitApp</h3>
+                </div>
+                <button onclick="closeMenu()" class="rounded-xl border border-slate-700/70 p-2 text-slate-300 transition hover:border-sky-500/40 hover:bg-slate-800/60 hover:text-sky-300">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+            <div class="space-y-2">
+                <button onclick="switchView('progress')" class="menu-action w-full rounded-2xl px-4 py-4 text-left text-sm text-slate-200 transition hover:bg-slate-800/60">
+                    <span class="font-semibold">Your Progress</span>
+                    <span class="block text-xs text-slate-500 mt-1">Track habits, streaks, and daily sessions</span>
+                </button>
+                <button onclick="switchView('friends')" class="menu-action w-full rounded-2xl px-4 py-4 text-left text-sm text-slate-200 transition hover:bg-slate-800/60">
+                    <span class="font-semibold">Friends Progress</span>
+                    <span class="block text-xs text-slate-500 mt-1">Share invites and view your circle in read-only mode</span>
+                </button>
+            </div>
+        </div>
+
         <!-- Header -->
-        <header class="flex flex-wrap justify-between items-center gap-4 glass px-5 md:px-6 py-4 rounded-2xl w-full">
+        <header class="relative z-50 flex flex-wrap justify-between items-center gap-4 glass px-5 md:px-6 py-4 rounded-2xl w-full">
             <div class="relative flex items-center gap-3">
                 <button id="menu-toggle-btn" onclick="toggleMenu()" class="rounded-xl border border-slate-700/70 p-2 text-slate-300 transition hover:border-sky-500/40 hover:bg-slate-800/60 hover:text-sky-300">
                     <i data-lucide="menu" class="w-5 h-5"></i>
                 </button>
-                <div id="menu-panel" class="menu-panel hide glass rounded-2xl p-2 shadow-2xl">
-                    <button onclick="switchView('progress')" class="menu-action w-full rounded-xl px-4 py-3 text-left text-sm text-slate-200 transition hover:bg-slate-800/60">
-                        <span class="font-semibold">Your Progress</span>
-                        <span class="block text-xs text-slate-500 mt-1">Track habits, streaks, and daily sessions</span>
-                    </button>
-                    <button onclick="switchView('friends')" class="menu-action w-full rounded-xl px-4 py-3 text-left text-sm text-slate-200 transition hover:bg-slate-800/60">
-                        <span class="font-semibold">Friends Progress</span>
-                        <span class="block text-xs text-slate-500 mt-1">Share invites and view your circle in read-only mode</span>
-                    </button>
-                </div>
                 <img src="favicon/favicon-32x32.png" alt="logo"
                     class="w-8 h-8 rounded-lg shadow-[0_0_12px_rgba(56,189,248,0.3)]">
                 <div class="flex flex-col">
@@ -530,15 +561,18 @@
     </div>
 
     <script>
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzjcBXOLkm-AyFTgmGKrrM944qW8YCXvhPHXoHu6MqMvYzQpxrYBhk0jZCaagf8RPAIUQ/exec";
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwVjj3HA5JEZsygy3MePvVLKxiBCz568cCZFzL2PbO1ttGw1I32Ix7f0wx1K9kjcZuVKQ/exec";
         const CTA_COOLDOWN_MS = 12000;
         const REFERRAL_STORAGE_KEY = 'habitReferralCodes';
+        const PROFILE_STORAGE_KEY = 'habitUserProfile';
 
         let currentUser = localStorage.getItem('habitUser') || null;
-        let currentProfile = null;
+        let currentProfile = readStoredProfile();
         let selectedActivityId = null;
         let isBuzzerRunning = false;
         let buzzerRequestInFlight = false;
+        let otpReady = false;
+        let otpSentForEmail = '';
         let startTime = null;
         let timerInterval = null;
         let activities = [];
@@ -553,7 +587,16 @@
         document.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
             captureReferralCodeFromUrl();
-            document.addEventListener('click', handleDocumentClick);
+            const emailInput = document.getElementById('email-input');
+            const verifyBtn = document.getElementById('verify-otp-btn');
+            if (verifyBtn) verifyBtn.disabled = true;
+            if (emailInput) {
+                emailInput.addEventListener('input', () => {
+                    otpReady = false;
+                    otpSentForEmail = '';
+                    if (verifyBtn) verifyBtn.disabled = true;
+                });
+            }
 
             if (currentUser) {
                 bootstrapAuthenticatedUser();
@@ -565,9 +608,15 @@
         async function bootstrapAuthenticatedUser() {
             const res = await apiGet('getProfile', { email: currentUser });
             if (!res.success) {
+                if (currentProfile && currentProfile.email === currentUser && isProfileComplete(currentProfile)) {
+                    applyCurrentProfile(currentProfile);
+                    await showDashboard(currentView);
+                    return;
+                }
                 currentUser = null;
                 currentProfile = null;
                 localStorage.removeItem('habitUser');
+                localStorage.removeItem(PROFILE_STORAGE_KEY);
                 showLogin();
                 return;
             }
@@ -586,6 +635,9 @@
             document.getElementById('dashboard-section').classList.add('hide');
             document.getElementById('otp-request').classList.remove('hide');
             document.getElementById('otp-verify').classList.add('hide');
+            otpReady = false;
+            otpSentForEmail = '';
+            document.getElementById('verify-otp-btn').disabled = true;
         }
 
         function showProfileSetup() {
@@ -618,6 +670,7 @@
             currentProfile = user;
             currentUser = user.email;
             localStorage.setItem('habitUser', currentUser);
+            localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(user));
             document.getElementById('user-display').textContent = truncateEmail(user.email);
             document.getElementById('referral-code-display').textContent = user.referral_code || '------';
             document.getElementById('dashboard-share-toggle').checked = user.share_progress !== false;
@@ -639,11 +692,20 @@
         }
 
         function toggleMenu() {
-            document.getElementById('menu-panel').classList.toggle('hide');
+            const panel = document.getElementById('menu-panel');
+            const overlay = document.getElementById('menu-overlay');
+            const shouldOpen = panel.classList.contains('hide');
+            panel.classList.toggle('hide', !shouldOpen);
+            overlay.classList.toggle('hide', !shouldOpen);
+            requestAnimationFrame(() => panel.classList.toggle('open', shouldOpen));
         }
 
         function closeMenu() {
-            document.getElementById('menu-panel').classList.add('hide');
+            const panel = document.getElementById('menu-panel');
+            const overlay = document.getElementById('menu-overlay');
+            panel.classList.remove('open');
+            overlay.classList.add('hide');
+            window.setTimeout(() => panel.classList.add('hide'), 220);
         }
 
         async function switchView(view, options = {}) {
@@ -654,16 +716,6 @@
 
             if (view === 'friends' && !options.silent) {
                 await loadFriends();
-            }
-        }
-
-        function handleDocumentClick(event) {
-            const menuPanel = document.getElementById('menu-panel');
-            const menuToggleBtn = document.getElementById('menu-toggle-btn');
-            if (!menuPanel || !menuToggleBtn) return;
-
-            if (!menuPanel.contains(event.target) && !menuToggleBtn.contains(event.target)) {
-                closeMenu();
             }
         }
 
@@ -696,12 +748,18 @@
             if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) return showToast('Enter a valid email', 'error');
 
             const btn = document.getElementById('send-otp-btn');
+            otpReady = false;
+            otpSentForEmail = '';
+            document.getElementById('verify-otp-btn').disabled = true;
             await withButtonLock(btn, { loadingText: 'Sending access code' }, async () => {
                 const res = await apiRequest({ action: 'sendOTP', email });
                 if (res.success) {
+                    otpReady = true;
+                    otpSentForEmail = email;
                     showToast('Check your email for the code');
                     document.getElementById('otp-request').classList.add('hide');
                     document.getElementById('otp-verify').classList.remove('hide');
+                    document.getElementById('verify-otp-btn').disabled = false;
                 } else {
                     showToast(res.message || 'Backend connection failed', 'error');
                 }
@@ -712,6 +770,7 @@
             const email = document.getElementById('email-input').value.trim().toLowerCase();
             const otp = document.getElementById('otp-input').value.trim();
             if (otp.length < 6) return showToast('Enter 6-digit code', 'error');
+            if (!otpReady || otpSentForEmail !== email) return showToast('Request a fresh OTP first', 'error');
 
             const btn = document.getElementById('verify-otp-btn');
             await withButtonLock(btn, { loadingText: 'Verifying access' }, async () => {
@@ -762,6 +821,7 @@
             if (!currentUser) return;
             await apiRequest({ action: 'logout', email: currentUser });
             localStorage.removeItem('habitUser');
+            localStorage.removeItem(PROFILE_STORAGE_KEY);
             currentUser = null;
             currentProfile = null;
             selectedActivityId = null;
@@ -1366,6 +1426,15 @@
 
         function clearPendingReferralCodes() {
             localStorage.removeItem(REFERRAL_STORAGE_KEY);
+        }
+
+        function readStoredProfile() {
+            try {
+                const raw = localStorage.getItem(PROFILE_STORAGE_KEY);
+                return raw ? JSON.parse(raw) : null;
+            } catch (error) {
+                return null;
+            }
         }
 
         async function apiRequest(body) {

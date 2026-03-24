@@ -349,6 +349,7 @@ function ensureDbSchema() {
   Object.keys(SHEET_HEADERS).forEach(name => {
     let sheet = ss.getSheetByName(name);
     if (!sheet) sheet = ss.insertSheet(name);
+    if (name === 'Users') migrateUsersSheet(sheet);
     ensureHeaders(sheet, SHEET_HEADERS[name]);
   });
 
@@ -366,19 +367,70 @@ function ensureDbSchema() {
 }
 
 function ensureHeaders(sheet, expectedHeaders) {
+  const requiredWidth = expectedHeaders.length;
+
+  if (sheet.getMaxColumns() < requiredWidth) {
+    sheet.insertColumnsAfter(sheet.getMaxColumns(), requiredWidth - sheet.getMaxColumns());
+  }
+
   if (sheet.getLastRow() === 0) {
-    sheet.appendRow(expectedHeaders);
+    sheet.getRange(1, 1, 1, requiredWidth).setValues([expectedHeaders]);
     return;
   }
 
-  const currentHeaders = sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), 1)).getValues()[0];
-  const missing = expectedHeaders.filter(header => currentHeaders.indexOf(header) === -1);
-  if (!missing.length) return;
+  sheet.getRange(1, 1, 1, requiredWidth).setValues([expectedHeaders]);
+}
 
-  missing.forEach(header => {
-    sheet.insertColumnAfter(sheet.getLastColumn() || 1);
-    sheet.getRange(1, sheet.getLastColumn()).setValue(header);
+function migrateUsersSheet(sheet) {
+  if (sheet.getLastRow() === 0) return;
+
+  const currentWidth = Math.max(sheet.getLastColumn(), SHEET_HEADERS.Users.length);
+  const values = sheet.getRange(1, 1, sheet.getLastRow(), currentWidth).getValues();
+  const currentHeaders = values[0].map(value => value ? value.toString().trim() : '');
+  const alreadyCurrent = SHEET_HEADERS.Users.every((header, index) => currentHeaders[index] === header);
+  if (alreadyCurrent) return;
+
+  const headerIndex = {};
+  currentHeaders.forEach((header, index) => {
+    if (header) headerIndex[header] = index;
   });
+
+  if (headerIndex.email === undefined) return;
+
+  const migratedRows = values.slice(1)
+    .filter(row => row.some(cell => cell !== '' && cell !== null))
+    .map(row => {
+      const email = row[headerIndex.email] || '';
+      const otp = headerIndex.otp !== undefined ? row[headerIndex.otp] : '';
+      const otpExpiry = headerIndex.otp_expiry !== undefined ? row[headerIndex.otp_expiry] : '';
+      const shareProgress = headerIndex.share_progress !== undefined
+        ? row[headerIndex.share_progress]
+        : true;
+      const existingName = headerIndex.name !== undefined ? row[headerIndex.name] : '';
+      const existingUserId = headerIndex.user_id !== undefined ? row[headerIndex.user_id] : '';
+      const existingReferralCode = headerIndex.referral_code !== undefined ? row[headerIndex.referral_code] : '';
+
+      return [
+        existingUserId || Utilities.getUuid(),
+        existingName || '',
+        email,
+        existingReferralCode || generateReferralCode(),
+        normalizeBoolean(shareProgress, true),
+        otp || '',
+        otpExpiry || ''
+      ];
+    });
+
+  const requiredWidth = SHEET_HEADERS.Users.length;
+  if (sheet.getMaxColumns() < requiredWidth) {
+    sheet.insertColumnsAfter(sheet.getMaxColumns(), requiredWidth - sheet.getMaxColumns());
+  }
+
+  sheet.clearContents();
+  sheet.getRange(1, 1, 1, requiredWidth).setValues([SHEET_HEADERS.Users]);
+  if (migratedRows.length) {
+    sheet.getRange(2, 1, migratedRows.length, requiredWidth).setValues(migratedRows);
+  }
 }
 
 function getSheet(name) {
@@ -386,7 +438,7 @@ function getSheet(name) {
 }
 
 function getHeaderMap(sheet) {
-  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  const headers = getSheetHeaders(sheet);
   const map = {};
   headers.forEach((header, index) => {
     map[header] = index;
@@ -396,10 +448,10 @@ function getHeaderMap(sheet) {
 
 function getRecords(sheet) {
   const rowCount = sheet.getLastRow();
-  const colCount = sheet.getLastColumn();
+  const headers = getSheetHeaders(sheet);
+  const colCount = headers.length;
   if (rowCount <= 1 || colCount === 0) return [];
 
-  const headers = sheet.getRange(1, 1, 1, colCount).getValues()[0];
   const rows = sheet.getRange(2, 1, rowCount - 1, colCount).getValues();
 
   return rows.map((row, rowOffset) => {
@@ -419,7 +471,7 @@ function findRecordBy(sheet, fieldName, value) {
 }
 
 function buildRow(sheet, values) {
-  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  const headers = getSheetHeaders(sheet);
   return headers.map(header => values[header] !== undefined ? values[header] : '');
 }
 
@@ -429,7 +481,8 @@ function appendRecord(sheet, values) {
 
 function updateRecord(sheet, rowIndex, values) {
   const headerMap = getHeaderMap(sheet);
-  const rowValues = sheet.getRange(rowIndex, 1, 1, sheet.getLastColumn()).getValues()[0];
+  const headers = getSheetHeaders(sheet);
+  const rowValues = sheet.getRange(rowIndex, 1, 1, headers.length).getValues()[0];
 
   Object.keys(values).forEach(key => {
     if (headerMap[key] === undefined) return;
@@ -437,6 +490,14 @@ function updateRecord(sheet, rowIndex, values) {
   });
 
   sheet.getRange(rowIndex, 1, 1, rowValues.length).setValues([rowValues]);
+}
+
+function getSheetHeaders(sheet) {
+  const expectedHeaders = SHEET_HEADERS[sheet.getName()] || [];
+  if (!expectedHeaders.length) {
+    return sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), 1)).getValues()[0];
+  }
+  return expectedHeaders;
 }
 
 function deleteRowsMatching(sheet, predicate) {
