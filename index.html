@@ -235,9 +235,54 @@
             background: #eab308;
             box-shadow: 0 0 8px rgba(234, 179, 8, 0.2);
         }
+        .loading-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 200;
+            background: rgba(2, 6, 23, 0.76);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+        .loading-progress {
+            overflow: hidden;
+            position: relative;
+        }
+        .loading-progress::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            transform: translateX(-100%);
+            background: linear-gradient(90deg, transparent, rgba(125, 211, 252, 0.85), transparent);
+            animation: loading-bar 1.8s ease-in-out infinite;
+        }
+        @keyframes loading-bar {
+            to { transform: translateX(100%); }
+        }
     </style>
 </head>
 <body class="bg-[#0f172a] animated-bg">
+    <div id="loading-overlay" class="loading-overlay hide">
+        <div class="min-h-screen flex items-center justify-center p-6">
+            <div class="w-full max-w-md glass rounded-3xl p-8 shadow-2xl">
+                <div class="flex items-center justify-center gap-3 mb-6">
+                    <div class="w-11 h-11 rounded-2xl bg-sky-500/15 border border-sky-400/20 flex items-center justify-center">
+                        <i data-lucide="sparkles" class="w-5 h-5 text-sky-300"></i>
+                    </div>
+                    <div class="text-left">
+                        <p class="text-[10px] uppercase tracking-[0.35em] text-sky-400">Please Wait</p>
+                        <h3 class="text-2xl font-bold mt-2">Loading your habit space</h3>
+                    </div>
+                </div>
+                <p id="loading-message" class="text-sm text-slate-300 min-h-[40px]">Building your habit streak</p>
+                <div class="loading-progress mt-5 h-2 rounded-full bg-slate-800/70 border border-slate-700/70"></div>
+                <div class="mt-6 grid grid-cols-3 gap-3">
+                    <div class="animate-pulse rounded-2xl bg-slate-800/60 h-20"></div>
+                    <div class="animate-pulse rounded-2xl bg-slate-800/60 h-20"></div>
+                    <div class="animate-pulse rounded-2xl bg-slate-800/60 h-20"></div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- LOGIN SECTION -->
     <div id="login-section" class="relative min-h-screen flex flex-col items-center justify-center p-6 fade-in overflow-hidden">
@@ -306,17 +351,17 @@
             <div class="space-y-6">
                 <div>
                     <label class="block text-sm font-medium text-slate-400 mb-2">Your Name</label>
-                    <input type="text" id="profile-name-input" placeholder=""
+                    <input type="text" id="profile-name-input" placeholder="Enter your name"
                         class="w-full bg-slate-800/50 border border-slate-700/50 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all text-slate-200">
                 </div>
 
                 <div class="rounded-2xl border border-slate-700/70 bg-slate-900/30 px-4 py-4">
-                    <div class="flex items-center justify-between gap-4">
-                        <div>
+                    <div class="flex items-center justify-between gap-3 min-w-0">
+                        <div class="min-w-0 flex-1">
                             <p class="text-sm font-semibold text-slate-100">Share my progress with friends</p>
                             <p class="text-xs text-slate-400 mt-1">Recommended for growth and friendly accountability.</p>
                         </div>
-                        <label class="switch">
+                        <label class="switch shrink-0">
                             <input type="checkbox" id="profile-share-toggle" checked>
                             <span class="switch-track"></span>
                         </label>
@@ -515,12 +560,12 @@
                 </div>
 
                 <div class="glass p-6 rounded-3xl">
-                    <div class="flex items-center justify-between gap-4">
-                        <div>
+                    <div class="flex items-center justify-between gap-3 min-w-0">
+                        <div class="min-w-0 flex-1">
                             <p class="text-sm font-semibold text-slate-100">Share my progress with friends</p>
                             <p class="text-xs text-slate-400 mt-1">Turn this off to hide instantly from every friend list.</p>
                         </div>
-                        <label class="switch">
+                        <label class="switch shrink-0">
                             <input type="checkbox" id="dashboard-share-toggle" checked onchange="handleDashboardShareToggle(this)">
                             <span class="switch-track"></span>
                         </label>
@@ -565,6 +610,12 @@
         const CTA_COOLDOWN_MS = 12000;
         const REFERRAL_STORAGE_KEY = 'habitReferralCodes';
         const PROFILE_STORAGE_KEY = 'habitUserProfile';
+        const LOADING_MESSAGES = [
+            'Building your habit streak',
+            'Syncing your progress',
+            'Almost there... stay consistent',
+            'Good things take time'
+        ];
 
         let currentUser = localStorage.getItem('habitUser') || null;
         let currentProfile = readStoredProfile();
@@ -583,6 +634,9 @@
         let friendDashboardCache = {};
         let selectedFriendId = null;
         let shareToggleBusy = false;
+        let loadingDepth = 0;
+        let loadingTimer = null;
+        let loadingMessageIndex = 0;
 
         document.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
@@ -606,26 +660,31 @@
         });
 
         async function bootstrapAuthenticatedUser() {
+            showLoading('Restoring your session');
             const res = await apiGet('getProfile', { email: currentUser });
-            if (!res.success) {
-                if (currentProfile && currentProfile.email === currentUser && isProfileComplete(currentProfile)) {
-                    applyCurrentProfile(currentProfile);
-                    await showDashboard(currentView);
+            try {
+                if (!res.success) {
+                    if (currentProfile && currentProfile.email === currentUser && isProfileComplete(currentProfile)) {
+                        applyCurrentProfile(currentProfile);
+                        await showDashboard(currentView);
+                        return;
+                    }
+                    currentUser = null;
+                    currentProfile = null;
+                    localStorage.removeItem('habitUser');
+                    localStorage.removeItem(PROFILE_STORAGE_KEY);
+                    showLogin();
                     return;
                 }
-                currentUser = null;
-                currentProfile = null;
-                localStorage.removeItem('habitUser');
-                localStorage.removeItem(PROFILE_STORAGE_KEY);
-                showLogin();
-                return;
-            }
 
-            applyCurrentProfile(res.user);
-            if (isProfileComplete(res.user)) {
-                await showDashboard(currentView);
-            } else {
-                showProfileSetup();
+                applyCurrentProfile(res.user);
+                if (isProfileComplete(res.user)) {
+                    await showDashboard(currentView);
+                } else {
+                    showProfileSetup();
+                }
+            } finally {
+                hideLoading();
             }
         }
 
@@ -650,18 +709,23 @@
         }
 
         async function showDashboard(view = 'progress') {
+            showLoading(view === 'friends' ? 'Opening your friend circle' : 'Preparing your dashboard');
             document.getElementById('login-section').classList.add('hide');
             document.getElementById('profile-section').classList.add('hide');
             document.getElementById('dashboard-section').classList.remove('hide');
-            await switchView(view, { silent: true });
-            applyCurrentProfile(currentProfile);
-            await fetchActivities();
-            await checkActiveSession();
-            if (selectedActivityId) {
-                fetchLogs();
-            }
-            if (currentView === 'friends') {
-                await loadFriends();
+            try {
+                await switchView(view, { silent: true });
+                applyCurrentProfile(currentProfile);
+                await fetchActivities();
+                await checkActiveSession();
+                if (selectedActivityId) {
+                    fetchLogs();
+                }
+                if (currentView === 'friends') {
+                    await loadFriends();
+                }
+            } finally {
+                hideLoading();
             }
         }
 
@@ -1129,18 +1193,23 @@
                 return;
             }
 
+            showLoading('Gathering your friend progress');
             const res = await apiGet('getFriends', { email: currentUser });
-            if (!res.success) {
-                showToast(res.message || 'Could not load friends', 'error');
-                return;
-            }
+            try {
+                if (!res.success) {
+                    showToast(res.message || 'Could not load friends', 'error');
+                    return;
+                }
 
-            friendsCache = res.friends || [];
-            if (selectedFriendId && !friendsCache.some(friend => friend.user_id === selectedFriendId)) {
-                selectedFriendId = null;
-                showEmptyFriendDashboard();
+                friendsCache = res.friends || [];
+                if (selectedFriendId && !friendsCache.some(friend => friend.user_id === selectedFriendId)) {
+                    selectedFriendId = null;
+                    showEmptyFriendDashboard();
+                }
+                renderFriendsList(friendsCache);
+            } finally {
+                hideLoading();
             }
-            renderFriendsList(friendsCache);
         }
 
         function renderFriendsList(friends) {
@@ -1191,15 +1260,20 @@
                 return;
             }
 
+            showLoading('Opening your friend dashboard');
             const res = await apiGet('getFriendDashboard', { email: currentUser, friend_user_id: friendUserId });
-            if (!res.success) {
-                showToast(res.message || 'Could not load friend dashboard', 'error');
-                showEmptyFriendDashboard();
-                return;
-            }
+            try {
+                if (!res.success) {
+                    showToast(res.message || 'Could not load friend dashboard', 'error');
+                    showEmptyFriendDashboard();
+                    return;
+                }
 
-            friendDashboardCache[friendUserId] = res.friend;
-            renderFriendDashboard(res.friend);
+                friendDashboardCache[friendUserId] = res.friend;
+                renderFriendDashboard(res.friend);
+            } finally {
+                hideLoading();
+            }
         }
 
         function showEmptyFriendDashboard() {
@@ -1434,6 +1508,38 @@
                 return raw ? JSON.parse(raw) : null;
             } catch (error) {
                 return null;
+            }
+        }
+
+        function showLoading(initialMessage) {
+            loadingDepth += 1;
+            const overlay = document.getElementById('loading-overlay');
+            const message = document.getElementById('loading-message');
+            if (!overlay || !message) return;
+
+            if (loadingDepth === 1) {
+                loadingMessageIndex = 0;
+                message.textContent = initialMessage || LOADING_MESSAGES[0];
+                overlay.classList.remove('hide');
+                loadingTimer = window.setInterval(() => {
+                    loadingMessageIndex = (loadingMessageIndex + 1) % LOADING_MESSAGES.length;
+                    message.textContent = LOADING_MESSAGES[loadingMessageIndex];
+                }, 1800);
+                lucide.createIcons();
+            } else if (initialMessage) {
+                message.textContent = initialMessage;
+            }
+        }
+
+        function hideLoading() {
+            loadingDepth = Math.max(loadingDepth - 1, 0);
+            if (loadingDepth > 0) return;
+
+            const overlay = document.getElementById('loading-overlay');
+            if (overlay) overlay.classList.add('hide');
+            if (loadingTimer) {
+                window.clearInterval(loadingTimer);
+                loadingTimer = null;
             }
         }
 
