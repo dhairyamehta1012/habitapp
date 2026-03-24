@@ -219,21 +219,31 @@
         }
         .friend-chain-grid {
             display: grid;
-            grid-template-columns: repeat(10, minmax(0, 1fr));
-            gap: 6px;
+            grid-template-columns: repeat(7, minmax(0, 1fr));
+            gap: 8px;
         }
-        .friend-chain-cell {
+        .calendar-box {
             aspect-ratio: 1;
-            border-radius: 6px;
-            background: #334155;
+            border-radius: 8px;
+            transition: all 0.25s ease;
+            position: relative;
+            background-color: #334155;
+            color: #94a3b8;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 4px;
         }
-        .friend-chain-cell.active {
-            background: #22c55e;
-            box-shadow: 0 0 8px rgba(34, 197, 94, 0.35);
+        .calendar-box.active {
+            background-color: #22c55e;
+            color: #ffffff;
+            box-shadow: 0 0 10px rgba(34, 197, 94, 0.35);
         }
-        .friend-chain-cell.exceptional {
-            background: #eab308;
-            box-shadow: 0 0 8px rgba(234, 179, 8, 0.2);
+        .calendar-box.exceptional {
+            background-color: #eab308;
+            color: #111827;
+            box-shadow: 0 0 10px rgba(234, 179, 8, 0.2);
         }
         .loading-overlay {
             position: fixed;
@@ -430,7 +440,7 @@
         <div id="progress-view" class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <!-- Sidebar: Activities -->
             <div class="space-y-6">
-                <div id="activities-card" class="glass p-6 rounded-3xl min-h-[400px] transition-all duration-300">
+                <div id="activities-card" class="glass p-6 rounded-3xl transition-all duration-300">
                     <div class="flex justify-between items-center mb-6">
                         <h2 class="text-lg font-semibold flex items-center gap-2">
                              <i data-lucide="list-todo" class="w-5 h-5 text-sky-400"></i>
@@ -538,25 +548,31 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="glass p-6 md:p-8 rounded-3xl">
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-5">
+                        <div>
+                            <p class="text-[10px] uppercase tracking-[0.35em] text-sky-400 mb-3">Invite</p>
+                            <h3 class="text-2xl font-bold tracking-tight">Invite friends to track habits together</h3>
+                            <p class="text-sm text-slate-400 mt-3">Share one clean invite link and build a private habit circle around your progress.</p>
+                        </div>
+                        <button onclick="shareReferral()" id="share-referral-btn" data-base-html="Invite Friends"
+                            class="w-full md:w-auto md:min-w-[190px] bg-sky-600 hover:bg-sky-500 text-white font-semibold py-3 px-6 rounded-xl btn-glow transition-all">
+                            Invite Friends
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
 
         <div id="friends-view" class="hide grid grid-cols-1 lg:grid-cols-[340px_minmax(0,1fr)] gap-6">
             <aside class="space-y-6">
                 <div class="glass p-6 rounded-3xl">
-                    <p class="text-[10px] uppercase tracking-[0.35em] text-sky-400 mb-3">Invite</p>
-                    <h2 class="text-2xl font-bold tracking-tight">Invite friends to track habits together</h2>
-                    <p class="text-sm text-slate-400 mt-3">Share your personal referral link and build a private circle around consistency.</p>
-
-                    <div class="mt-5 rounded-2xl border border-slate-700/70 bg-slate-900/35 p-4">
+                    <p class="text-[10px] uppercase tracking-[0.35em] text-sky-400 mb-3">Referral</p>
+                    <div class="rounded-2xl border border-slate-700/70 bg-slate-900/35 p-4">
                         <p class="text-[10px] uppercase tracking-[0.3em] text-slate-500">Your Referral Code</p>
                         <div id="referral-code-display" class="mt-2 text-2xl font-bold tracking-[0.25em] text-sky-300">------</div>
                     </div>
-
-                    <button onclick="shareReferral()" id="share-referral-btn" data-base-html="Share Invite"
-                        class="mt-5 w-full bg-sky-600 hover:bg-sky-500 text-white font-semibold py-3 rounded-xl btn-glow transition-all">
-                        Share Invite
-                    </button>
                 </div>
 
                 <div class="glass p-6 rounded-3xl">
@@ -633,6 +649,7 @@
         let friendsCache = null;
         let friendDashboardCache = {};
         let selectedFriendId = null;
+        let selectedFriendHabitId = null;
         let shareToggleBusy = false;
         let loadingDepth = 0;
         let loadingTimer = null;
@@ -735,7 +752,7 @@
             currentUser = user.email;
             localStorage.setItem('habitUser', currentUser);
             localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(user));
-            document.getElementById('user-display').textContent = truncateEmail(user.email);
+            document.getElementById('user-display').textContent = user.name?.trim() || truncateEmail(user.email);
             document.getElementById('referral-code-display').textContent = user.referral_code || '------';
             document.getElementById('dashboard-share-toggle').checked = user.share_progress !== false;
             document.getElementById('profile-share-toggle').checked = user.share_progress !== false;
@@ -910,7 +927,13 @@
                 document.getElementById('chain-grid').innerHTML = '';
                 document.getElementById('streak-counter').textContent = '0 Day Streak';
             }
+            if (!selectedActivityId && activities.length > 0) {
+                selectedActivityId = activities[0].id;
+                document.getElementById('active-habit-name').textContent = activities[0].name;
+                document.getElementById('buzzer-btn').disabled = false;
+            }
             renderActivities();
+            if (selectedActivityId) fetchLogs();
         }
 
         function renderActivities() {
@@ -1204,6 +1227,7 @@
                 friendsCache = res.friends || [];
                 if (selectedFriendId && !friendsCache.some(friend => friend.user_id === selectedFriendId)) {
                     selectedFriendId = null;
+                    selectedFriendHabitId = null;
                     showEmptyFriendDashboard();
                 }
                 renderFriendsList(friendsCache);
@@ -1253,6 +1277,7 @@
 
         async function openFriendDashboard(friendUserId) {
             selectedFriendId = friendUserId;
+            selectedFriendHabitId = null;
             renderFriendsList(friendsCache || []);
 
             if (friendDashboardCache[friendUserId]) {
@@ -1280,6 +1305,7 @@
             document.getElementById('friend-dashboard-empty').classList.remove('hide');
             document.getElementById('friend-dashboard-content').classList.add('hide');
             document.getElementById('friend-dashboard-content').innerHTML = '';
+            selectedFriendHabitId = null;
         }
 
         function renderFriendDashboard(friend) {
@@ -1288,32 +1314,37 @@
 
             emptyState.classList.add('hide');
             content.classList.remove('hide');
-
-            const habitsMarkup = (friend.habits || []).length
-                ? friend.habits.map(habit => {
-                    const streak = calculateStreak(habit.logs || [], habit.exceptional_day);
-                    const sessions = (habit.logs || []).length;
-                    return `
-                        <div class="rounded-3xl border border-slate-700/70 bg-slate-900/30 p-5">
-                            <div class="flex flex-wrap items-start justify-between gap-4 mb-4">
-                                <div>
-                                    <p class="text-lg font-semibold text-slate-100">${habit.name}</p>
-                                    <p class="text-xs uppercase tracking-[0.22em] text-slate-500 mt-1">${sessions} sessions logged</p>
-                                </div>
-                                <div class="rounded-2xl border border-sky-500/25 bg-sky-500/10 px-4 py-2 text-right">
-                                    <p class="text-[10px] uppercase tracking-[0.22em] text-sky-300">Current Streak</p>
-                                    <p class="text-lg font-bold text-sky-100">${streak} days</p>
-                                </div>
+            const habits = friend.habits || [];
+            if (!habits.length) {
+                content.innerHTML = `
+                    <div class="space-y-6">
+                        <div class="flex flex-wrap items-start justify-between gap-4">
+                            <div>
+                                <p class="text-[10px] uppercase tracking-[0.35em] text-slate-500">Read Only</p>
+                                <h3 class="text-3xl font-bold tracking-tight mt-3">${friend.name}</h3>
+                                <p class="text-sm text-slate-400 mt-2">This friend has not shared any habits yet.</p>
                             </div>
-                            ${buildFriendCalendar(habit.logs || [], habit.exceptional_day)}
+                            <div class="rounded-2xl border border-slate-700/70 bg-slate-900/35 px-4 py-3">
+                                <p class="text-[10px] uppercase tracking-[0.24em] text-slate-500">Total Habits</p>
+                                <p class="text-2xl font-bold text-slate-100 mt-1">0</p>
+                            </div>
                         </div>
-                    `;
-                }).join('')
-                : `
-                    <div class="rounded-3xl border border-dashed border-slate-700/60 bg-slate-900/20 px-6 py-12 text-center">
-                        <p class="text-lg font-semibold text-slate-100">${friend.name} has not added any habits yet.</p>
+                        <div class="rounded-3xl border border-dashed border-slate-700/60 bg-slate-900/20 px-6 py-12 text-center">
+                            <p class="text-lg font-semibold text-slate-100">No habits shared yet</p>
+                        </div>
                     </div>
                 `;
+                return;
+            }
+
+            if (!selectedFriendHabitId || !habits.some(habit => habit.id === selectedFriendHabitId)) {
+                selectedFriendHabitId = habits[0].id;
+            }
+
+            const selectedHabit = habits.find(habit => habit.id === selectedFriendHabitId) || habits[0];
+            const streak = calculateStreak(selectedHabit.logs || [], selectedHabit.exceptional_day);
+            const sessions = (selectedHabit.logs || []).length;
+            const selectorDisabled = habits.length <= 1 ? 'disabled' : '';
 
             content.innerHTML = `
                 <div class="space-y-6">
@@ -1324,19 +1355,57 @@
                             <p class="text-sm text-slate-400 mt-2">Recent progress across each habit. Editing stays locked to the owner.</p>
                         </div>
                         <div class="rounded-2xl border border-slate-700/70 bg-slate-900/35 px-4 py-3">
-                            <p class="text-[10px] uppercase tracking-[0.24em] text-slate-500">Habits Shared</p>
-                            <p class="text-2xl font-bold text-slate-100 mt-1">${(friend.habits || []).length}</p>
+                            <p class="text-[10px] uppercase tracking-[0.24em] text-slate-500">Total Habits</p>
+                            <p class="text-2xl font-bold text-slate-100 mt-1">${habits.length}</p>
                         </div>
                     </div>
-                    ${habitsMarkup}
+
+                    <div class="rounded-3xl border border-slate-700/70 bg-slate-900/30 p-5">
+                        <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
+                            <div class="min-w-0 flex-1">
+                                <label for="friend-habit-selector" class="block text-[10px] uppercase tracking-[0.24em] text-slate-500 mb-2">Habit Selector</label>
+                                <select id="friend-habit-selector" ${selectorDisabled}
+                                    class="w-full bg-slate-950/40 border border-slate-700 rounded-2xl px-4 py-3 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500 disabled:opacity-70">
+                                    ${habits.map(habit => `<option value="${habit.id}" ${habit.id === selectedHabit.id ? 'selected' : ''}>${habit.name}</option>`).join('')}
+                                </select>
+                            </div>
+                            <div class="flex flex-wrap gap-3">
+                                <div class="rounded-2xl border border-slate-700/70 bg-slate-950/30 px-4 py-3">
+                                    <p class="text-[10px] uppercase tracking-[0.22em] text-slate-500">Sessions</p>
+                                    <p class="text-lg font-bold text-slate-100 mt-1">${sessions}</p>
+                                </div>
+                                <div class="rounded-2xl border border-sky-500/25 bg-sky-500/10 px-4 py-3">
+                                    <p class="text-[10px] uppercase tracking-[0.22em] text-sky-300">Current Streak</p>
+                                    <p class="text-lg font-bold text-sky-100 mt-1">${streak} days</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="rounded-3xl border border-slate-700/70 bg-slate-900/30 p-5">
+                        <div class="mb-5">
+                            <p class="text-lg font-semibold text-slate-100">${selectedHabit.name}</p>
+                            <p class="text-xs uppercase tracking-[0.22em] text-slate-500 mt-1">Latest 30 days</p>
+                        </div>
+                        ${buildFriendCalendar(selectedHabit.logs || [], selectedHabit.exceptional_day)}
+                    </div>
                 </div>
             `;
+
+            const selector = document.getElementById('friend-habit-selector');
+            if (selector) {
+                selector.addEventListener('change', event => {
+                    selectedFriendHabitId = event.target.value;
+                    renderFriendDashboard(friend);
+                });
+            }
         }
 
         function buildFriendCalendar(logs, exceptionalDay, days = 30) {
             const logDates = new Set(logs.map(log => new Date(log.timestamp).toDateString()));
             const exDayIdx = exceptionalDay !== undefined && exceptionalDay !== 'None' ? parseInt(exceptionalDay, 10) : null;
             const cells = [];
+            const monthNames = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 
             for (let index = days - 1; index >= 0; index--) {
                 const date = new Date();
@@ -1344,16 +1413,21 @@
                 const dateStr = date.toDateString();
                 const isLogged = logDates.has(dateStr);
                 const isExceptional = exDayIdx !== null && !isNaN(exDayIdx) && date.getDay() === exDayIdx;
-                const classes = ['friend-chain-cell'];
+                const classes = ['calendar-box'];
                 if (isLogged) classes.push('active');
                 else if (isExceptional) classes.push('exceptional');
-                cells.push(`<div class="${classes.join(' ')}" title="${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}"></div>`);
+                cells.push(`
+                    <div class="${classes.join(' ')}" title="${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}">
+                        <span class="text-[13px] font-bold leading-none">${date.getDate()}</span>
+                        <span class="text-[9px] opacity-70 font-semibold tracking-tight">${monthNames[date.getMonth()]}</span>
+                    </div>
+                `);
             }
 
             return `
                 <div>
                     <div class="friend-chain-grid">${cells.join('')}</div>
-                    <div class="mt-4 flex items-center gap-4 text-[10px] uppercase tracking-[0.2em] text-slate-500">
+                    <div class="mt-4 flex flex-wrap items-center gap-4 text-[10px] uppercase tracking-[0.2em] text-slate-500">
                         <span class="flex items-center gap-2"><span class="inline-block w-2.5 h-2.5 rounded-sm bg-green-500"></span>Done</span>
                         <span class="flex items-center gap-2"><span class="inline-block w-2.5 h-2.5 rounded-sm bg-yellow-500"></span>Rest</span>
                         <span class="flex items-center gap-2"><span class="inline-block w-2.5 h-2.5 rounded-sm bg-slate-600"></span>Missed</span>
@@ -1402,8 +1476,7 @@
                     if (navigator.share) {
                         await navigator.share({
                             title: 'HabitApp Invite',
-                            text,
-                            url
+                            text
                         });
                         showToast('Invite ready to share');
                         return;
@@ -1628,13 +1701,19 @@
 
             const hasActivities = activities.length > 0;
             card.classList.toggle('activity-card-compact', !hasActivities);
-            card.classList.toggle('min-h-[400px]', hasActivities);
+            card.style.minHeight = !hasActivities
+                ? '300px'
+                : activities.length === 1
+                    ? '220px'
+                    : activities.length <= 3
+                        ? '320px'
+                        : '400px';
             openBtn.classList.toggle('bg-sky-500/10', !hasActivities);
             openBtn.classList.toggle('text-sky-300', !hasActivities);
             openBtn.classList.toggle('border', !hasActivities);
             openBtn.classList.toggle('border-sky-500/30', !hasActivities);
             openBtn.classList.toggle('scale-110', !hasActivities);
-            list.classList.toggle('max-h-[28rem]', activities.length > 5);
+            list.classList.toggle('max-h-[22rem]', activities.length > 5);
             list.classList.toggle('overflow-y-auto', activities.length > 5);
             list.classList.toggle('pr-1', activities.length > 5);
         }
