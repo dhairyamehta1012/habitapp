@@ -92,13 +92,142 @@
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
+        .animated-bg {
+            background:
+                radial-gradient(circle at top left, rgba(56, 189, 248, 0.18), transparent 30%),
+                radial-gradient(circle at bottom right, rgba(14, 165, 233, 0.12), transparent 28%),
+                linear-gradient(135deg, #020617 0%, #0f172a 45%, #111827 100%);
+            background-size: 160% 160%;
+            animation: drift-bg 18s ease-in-out infinite;
+        }
+        @keyframes drift-bg {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        .orb {
+            position: absolute;
+            border-radius: 999px;
+            filter: blur(12px);
+            opacity: 0.65;
+            animation: float-orb 9s ease-in-out infinite;
+        }
+        .orb:nth-child(2) { animation-delay: -3s; }
+        .orb:nth-child(3) { animation-delay: -6s; }
+        @keyframes float-orb {
+            0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+            50% { transform: translate3d(0, -16px, 0) scale(1.08); }
+        }
+        .hero-chain span {
+            animation: hero-pop 2.8s ease-in-out infinite;
+        }
+        .hero-chain span:nth-child(2) { animation-delay: 0.2s; }
+        .hero-chain span:nth-child(3) { animation-delay: 0.4s; }
+        .hero-chain span:nth-child(4) { animation-delay: 0.6s; }
+        .hero-chain span:nth-child(5) { animation-delay: 0.8s; }
+        @keyframes hero-pop {
+            0%, 100% { transform: translateY(0); opacity: 0.45; }
+            50% { transform: translateY(-6px); opacity: 1; }
+        }
+        .activity-card-compact {
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .btn-loading {
+            position: relative;
+            pointer-events: none;
+        }
+        .btn-loading::after {
+            content: "";
+            width: 14px;
+            height: 14px;
+            border-radius: 999px;
+            border: 2px solid rgba(255, 255, 255, 0.35);
+            border-top-color: #ffffff;
+            display: inline-block;
+            animation: spin 0.8s linear infinite;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .menu-panel {
+            position: absolute;
+            top: calc(100% + 10px);
+            left: 0;
+            min-width: 220px;
+            z-index: 40;
+        }
+        .switch {
+            position: relative;
+            display: inline-flex;
+            width: 52px;
+            height: 30px;
+            align-items: center;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .switch-track {
+            position: absolute;
+            inset: 0;
+            border-radius: 999px;
+            background: rgba(51, 65, 85, 0.95);
+            border: 1px solid rgba(148, 163, 184, 0.24);
+            transition: 0.25s ease;
+        }
+        .switch-track::after {
+            content: "";
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 22px;
+            height: 22px;
+            border-radius: 999px;
+            background: #f8fafc;
+            transition: 0.25s ease;
+        }
+        .switch input:checked + .switch-track {
+            background: rgba(14, 165, 233, 0.38);
+            border-color: rgba(56, 189, 248, 0.55);
+        }
+        .switch input:checked + .switch-track::after {
+            transform: translateX(22px);
+            background: #e0f2fe;
+        }
+        .friend-chain-grid {
+            display: grid;
+            grid-template-columns: repeat(10, minmax(0, 1fr));
+            gap: 6px;
+        }
+        .friend-chain-cell {
+            aspect-ratio: 1;
+            border-radius: 6px;
+            background: #334155;
+        }
+        .friend-chain-cell.active {
+            background: #22c55e;
+            box-shadow: 0 0 8px rgba(34, 197, 94, 0.35);
+        }
+        .friend-chain-cell.exceptional {
+            background: #eab308;
+            box-shadow: 0 0 8px rgba(234, 179, 8, 0.2);
+        }
     </style>
 </head>
-<body class="bg-[#0f172a]">
+<body class="bg-[#0f172a] animated-bg">
 
     <!-- LOGIN SECTION -->
-    <div id="login-section" class="min-h-screen flex flex-col items-center justify-center p-6 fade-in">
-        <div class="w-full max-w-md glass p-8 rounded-3xl shadow-2xl">
+    <div id="login-section" class="relative min-h-screen flex flex-col items-center justify-center p-6 fade-in overflow-hidden">
+        <div class="orb top-16 left-8 w-28 h-28 bg-sky-500/35"></div>
+        <div class="orb bottom-16 right-10 w-40 h-40 bg-cyan-400/20"></div>
+        <div class="orb top-1/2 right-1/4 w-24 h-24 bg-emerald-400/20"></div>
+
+        <div class="w-full max-w-md glass p-8 rounded-3xl shadow-2xl relative z-10">
             <div class="text-center mb-10">
                 <div class="flex items-center justify-center gap-3 mb-3">
                     <img src="favicon/favicon-32x32.png" alt="HabitApp Logo"
@@ -106,6 +235,17 @@
                     <h1 class="text-3xl font-bold tracking-tight">Habit<span class="text-sky-400">App</span></h1>
                 </div>
                 <p class="text-slate-500 text-sm font-medium uppercase tracking-widest">by Dhairya Mehta</p>
+                <div class="hero-chain flex items-center justify-center gap-2 mt-6 mb-5">
+                    <span class="w-3 h-3 rounded-sm bg-slate-600"></span>
+                    <span class="w-3 h-3 rounded-sm bg-slate-500"></span>
+                    <span class="w-3 h-3 rounded-sm bg-sky-400 shadow-[0_0_15px_rgba(56,189,248,0.5)]"></span>
+                    <span class="w-3 h-3 rounded-sm bg-emerald-400 shadow-[0_0_15px_rgba(74,222,128,0.45)]"></span>
+                    <span class="w-3 h-3 rounded-sm bg-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.35)]"></span>
+                </div>
+                <div class="space-y-2">
+                    <p class="text-xl font-semibold tracking-tight text-slate-100">Build great habits.</p>
+                    <p class="text-sm text-slate-400">It starts with Day One. Small steps. Big change.</p>
+                </div>
             </div>
             
             <div id="otp-request">
@@ -114,7 +254,7 @@
                     <input type="email" id="email-input" placeholder="name@example.com" 
                         class="w-full bg-slate-800/50 border border-slate-700/50 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all text-slate-200">
                 </div>
-                <button onclick="requestOTP()" id="send-otp-btn"
+                <button onclick="requestOTP()" id="send-otp-btn" data-base-html="<span>Get Access Code</span><i data-lucide=&quot;arrow-right&quot; class=&quot;w-4 h-4&quot;></i>"
                     class="w-full bg-sky-600 hover:bg-sky-500 text-white font-semibold py-3 rounded-xl btn-glow transition-all flex items-center justify-center space-x-2">
                     <span>Get Access Code</span>
                     <i data-lucide="arrow-right" class="w-4 h-4"></i>
@@ -128,9 +268,48 @@
                         class="w-full bg-slate-800/50 border border-slate-700/50 rounded-xl px-4 py-3 text-center text-3xl tracking-[0.5em] font-bold focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all text-sky-400">
                     <p class="text-[10px] text-slate-600 mt-4 uppercase tracking-tighter">Enter the 6-digit code sent to your inbox</p>
                 </div>
-                <button onclick="verifyOTP()" id="verify-otp-btn"
+                <button onclick="verifyOTP()" id="verify-otp-btn" data-base-html="Verify &amp; Access"
                     class="w-full bg-sky-600 hover:bg-sky-500 text-white font-semibold py-3 rounded-xl btn-glow transition-all">
                     Verify & Access
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PROFILE SECTION -->
+    <div id="profile-section" class="hide min-h-screen flex items-center justify-center p-6 fade-in">
+        <div class="w-full max-w-lg glass p-8 rounded-3xl shadow-2xl">
+            <div class="text-center mb-8">
+                <p class="text-[10px] uppercase tracking-[0.35em] text-sky-400 mb-3">Complete Setup</p>
+                <h2 class="text-3xl font-bold tracking-tight">Welcome to your habit circle</h2>
+                <p class="text-sm text-slate-400 mt-3">Set your public name once so friends can recognize your progress when they join through your invite.</p>
+            </div>
+
+            <div class="space-y-6">
+                <div>
+                    <label class="block text-sm font-medium text-slate-400 mb-2">Your Name</label>
+                    <input type="text" id="profile-name-input" placeholder="Dhairya"
+                        class="w-full bg-slate-800/50 border border-slate-700/50 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all text-slate-200">
+                </div>
+
+                <div class="rounded-2xl border border-slate-700/70 bg-slate-900/30 px-4 py-4">
+                    <div class="flex items-center justify-between gap-4">
+                        <div>
+                            <p class="text-sm font-semibold text-slate-100">Share my progress with friends</p>
+                            <p class="text-xs text-slate-400 mt-1">Recommended for growth and friendly accountability.</p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="profile-share-toggle" checked>
+                            <span class="switch-track"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div id="pending-referral-note" class="hide rounded-2xl border border-sky-500/25 bg-sky-500/10 px-4 py-4 text-sm text-sky-100"></div>
+
+                <button onclick="completeProfileSetup()" id="complete-profile-btn" data-base-html="Save &amp; Continue"
+                    class="w-full bg-sky-600 hover:bg-sky-500 text-white font-semibold py-3 rounded-xl btn-glow transition-all">
+                    Save & Continue
                 </button>
             </div>
         </div>
@@ -139,8 +318,21 @@
     <!-- DASHBOARD SECTION -->
     <div id="dashboard-section" class="hide min-h-screen flex flex-col p-4 md:p-8 max-w-7xl mx-auto space-y-6 fade-in">
         <!-- Header -->
-        <header class="flex justify-between items-center glass px-6 py-4 rounded-2xl w-full">
-            <div class="flex items-center gap-3">
+        <header class="flex flex-wrap justify-between items-center gap-4 glass px-5 md:px-6 py-4 rounded-2xl w-full">
+            <div class="relative flex items-center gap-3">
+                <button id="menu-toggle-btn" onclick="toggleMenu()" class="rounded-xl border border-slate-700/70 p-2 text-slate-300 transition hover:border-sky-500/40 hover:bg-slate-800/60 hover:text-sky-300">
+                    <i data-lucide="menu" class="w-5 h-5"></i>
+                </button>
+                <div id="menu-panel" class="menu-panel hide glass rounded-2xl p-2 shadow-2xl">
+                    <button onclick="switchView('progress')" class="menu-action w-full rounded-xl px-4 py-3 text-left text-sm text-slate-200 transition hover:bg-slate-800/60">
+                        <span class="font-semibold">Your Progress</span>
+                        <span class="block text-xs text-slate-500 mt-1">Track habits, streaks, and daily sessions</span>
+                    </button>
+                    <button onclick="switchView('friends')" class="menu-action w-full rounded-xl px-4 py-3 text-left text-sm text-slate-200 transition hover:bg-slate-800/60">
+                        <span class="font-semibold">Friends Progress</span>
+                        <span class="block text-xs text-slate-500 mt-1">Share invites and view your circle in read-only mode</span>
+                    </button>
+                </div>
                 <img src="favicon/favicon-32x32.png" alt="logo"
                     class="w-8 h-8 rounded-lg shadow-[0_0_12px_rgba(56,189,248,0.3)]">
                 <div class="flex flex-col">
@@ -148,9 +340,9 @@
                     <span class="text-[10px] text-slate-500 uppercase tracking-widest">by Dhairya Mehta</span>
                 </div>
             </div>
-            <div class="flex items-center space-x-3 md:space-x-6">
-                <div id="user-info" class="flex flex-col items-end">
-                    <span id="user-display" class="text-[10px] md:text-sm font-medium text-slate-300 truncate max-w-[100px] md:max-w-none"></span>
+            <div class="ml-auto flex items-center gap-3 md:gap-5 min-w-0 max-w-full">
+                <div id="user-info" class="flex min-w-0 flex-col items-end">
+                    <span id="user-display" class="text-[10px] md:text-sm font-medium text-slate-300 truncate max-w-[130px] sm:max-w-[180px] md:max-w-[240px] lg:max-w-[320px]"></span>
                     <span class="text-[8px] md:text-[10px] border border-sky-500/30 px-2 py-0.5 rounded-full text-sky-400 uppercase tracking-tighter md:tracking-normal">Authenticated</span>
                 </div>
                 <button onclick="logout()" class="p-2 md:p-2.5 hover:bg-slate-800/50 rounded-xl transition-all border border-slate-700/50">
@@ -159,22 +351,27 @@
             </div>
         </header>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div id="progress-view" class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <!-- Sidebar: Activities -->
             <div class="space-y-6">
-                <div class="glass p-6 rounded-3xl min-h-[400px]">
+                <div id="activities-card" class="glass p-6 rounded-3xl min-h-[400px] transition-all duration-300">
                     <div class="flex justify-between items-center mb-6">
                         <h2 class="text-lg font-semibold flex items-center gap-2">
                              <i data-lucide="list-todo" class="w-5 h-5 text-sky-400"></i>
                              Activities
                         </h2>
-                        <button onclick="toggleSettings()" class="p-2 hover:bg-slate-800/50 rounded-lg text-slate-500 hover:text-sky-400 transition-all">
+                        <button id="open-settings-btn" onclick="toggleSettings()" class="p-2 hover:bg-slate-800/50 rounded-lg text-slate-500 hover:text-sky-400 transition-all">
                             <i data-lucide="plus" class="w-5 h-5"></i>
                         </button>
                     </div>
                     
                     <div id="settings-panel" class="hide mb-6 p-5 bg-slate-800/30 rounded-2xl border border-sky-500/20 fade-in">
-                        <h3 class="text-[10px] uppercase tracking-widest text-slate-500 mb-3 font-bold">New Activity</h3>
+                        <div class="flex items-center justify-between gap-4 mb-3">
+                            <h3 class="text-[10px] uppercase tracking-widest text-slate-500 font-bold">New Activity</h3>
+                            <button onclick="closeSettings()" class="rounded-lg border border-slate-700/60 px-2 py-1 text-[10px] font-bold uppercase tracking-widest text-slate-400 transition hover:border-sky-500/40 hover:text-sky-300">
+                                Close
+                            </button>
+                        </div>
                         <input type="text" id="new-activity-name" placeholder="Name (e.g. Gym)"
                             class="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-2 mb-3 focus:outline-none focus:ring-1 focus:ring-sky-500 text-sm">
                         
@@ -192,7 +389,7 @@
                             </select>
                         </div>
 
-                        <button onclick="createActivity()" 
+                        <button onclick="createActivity()" id="create-activity-btn" data-base-html="Confirm Habit"
                             class="w-full bg-sky-600 hover:bg-sky-500 text-[10px] font-bold py-2.5 rounded-xl transition-all uppercase tracking-wider">
                             Confirm Habit
                         </button>
@@ -234,6 +431,8 @@
                                 <button onclick="setChainRange(7)" class="range-btn px-3 py-1 text-[10px] font-bold rounded-lg border border-slate-700 hover:border-sky-500/50 transition-all uppercase">7d</button>
                                 <button onclick="setChainRange(30)" class="range-btn active px-3 py-1 text-[10px] font-bold rounded-lg border border-sky-500 bg-sky-500/10 text-sky-400 transition-all uppercase">30d</button>
                                 <button onclick="setChainRange(90)" class="range-btn px-3 py-1 text-[10px] font-bold rounded-lg border border-slate-700 hover:border-sky-500/50 transition-all uppercase">90d</button>
+                                <button onclick="setChainRange(180)" class="range-btn px-3 py-1 text-[10px] font-bold rounded-lg border border-slate-700 hover:border-sky-500/50 transition-all uppercase">180d</button>
+                                <button onclick="setChainRange(365)" class="range-btn px-3 py-1 text-[10px] font-bold rounded-lg border border-slate-700 hover:border-sky-500/50 transition-all uppercase">365d</button>
                             </div>
                         </div>
                     </div>
@@ -265,6 +464,64 @@
                 </div>
             </div>
         </div>
+
+        <div id="friends-view" class="hide grid grid-cols-1 lg:grid-cols-[340px_minmax(0,1fr)] gap-6">
+            <aside class="space-y-6">
+                <div class="glass p-6 rounded-3xl">
+                    <p class="text-[10px] uppercase tracking-[0.35em] text-sky-400 mb-3">Invite</p>
+                    <h2 class="text-2xl font-bold tracking-tight">Invite friends to track habits together</h2>
+                    <p class="text-sm text-slate-400 mt-3">Share your personal referral link and build a private circle around consistency.</p>
+
+                    <div class="mt-5 rounded-2xl border border-slate-700/70 bg-slate-900/35 p-4">
+                        <p class="text-[10px] uppercase tracking-[0.3em] text-slate-500">Your Referral Code</p>
+                        <div id="referral-code-display" class="mt-2 text-2xl font-bold tracking-[0.25em] text-sky-300">------</div>
+                    </div>
+
+                    <button onclick="shareReferral()" id="share-referral-btn" data-base-html="Share Invite"
+                        class="mt-5 w-full bg-sky-600 hover:bg-sky-500 text-white font-semibold py-3 rounded-xl btn-glow transition-all">
+                        Share Invite
+                    </button>
+                </div>
+
+                <div class="glass p-6 rounded-3xl">
+                    <div class="flex items-center justify-between gap-4">
+                        <div>
+                            <p class="text-sm font-semibold text-slate-100">Share my progress with friends</p>
+                            <p class="text-xs text-slate-400 mt-1">Turn this off to hide instantly from every friend list.</p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="dashboard-share-toggle" checked onchange="handleDashboardShareToggle(this)">
+                            <span class="switch-track"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="glass p-6 rounded-3xl">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <p class="text-[10px] uppercase tracking-[0.3em] text-slate-500">Friends Progress</p>
+                            <h3 class="text-xl font-bold mt-2">Your Circle</h3>
+                        </div>
+                        <button onclick="loadFriends(true)" class="rounded-xl border border-slate-700/70 p-2 text-slate-400 transition hover:border-sky-500/40 hover:text-sky-300">
+                            <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                    <div id="friends-list" class="space-y-3">
+                        <div class="animate-pulse bg-slate-800/50 h-16 rounded-2xl"></div>
+                        <div class="animate-pulse bg-slate-800/50 h-16 rounded-2xl"></div>
+                    </div>
+                </div>
+            </aside>
+
+            <section class="glass p-6 md:p-8 rounded-3xl min-h-[520px]">
+                <div id="friend-dashboard-empty" class="h-full flex flex-col justify-center items-center text-center">
+                    <p class="text-[10px] uppercase tracking-[0.35em] text-slate-500">Friends Progress</p>
+                    <h3 class="text-3xl font-bold tracking-tight mt-4">Choose a friend to explore their streaks</h3>
+                    <p class="text-sm text-slate-400 mt-3 max-w-md">This dashboard is read-only. You’ll see each habit, recent completion calendar, and streak momentum when your invited friends choose to share.</p>
+                </div>
+                <div id="friend-dashboard-content" class="hide"></div>
+            </section>
+        </div>
     </div>
 
     <!-- UI TOAST -->
@@ -273,49 +530,157 @@
     </div>
 
     <script>
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbypCzwpVSs1GMpLnZbhqtRPpMN2uB4eWwfCSiMtGV0OEH4FBtWTmRuF38FTpj45q0lylA/exec";
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzjcBXOLkm-AyFTgmGKrrM944qW8YCXvhPHXoHu6MqMvYzQpxrYBhk0jZCaagf8RPAIUQ/exec";
+        const CTA_COOLDOWN_MS = 12000;
+        const REFERRAL_STORAGE_KEY = 'habitReferralCodes';
 
-        // STATE
         let currentUser = localStorage.getItem('habitUser') || null;
+        let currentProfile = null;
         let selectedActivityId = null;
         let isBuzzerRunning = false;
+        let buzzerRequestInFlight = false;
         let startTime = null;
         let timerInterval = null;
         let activities = [];
         let currentRange = 30;
         let customMode = false;
+        let currentView = 'progress';
+        let friendsCache = null;
+        let friendDashboardCache = {};
+        let selectedFriendId = null;
+        let shareToggleBusy = false;
 
-        // INITIALIZE
         document.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
+            captureReferralCodeFromUrl();
+            document.addEventListener('click', handleDocumentClick);
+
             if (currentUser) {
-                showDashboard();
+                bootstrapAuthenticatedUser();
+            } else {
+                updatePendingReferralNote();
             }
-            // Set default date range (last 30 days)
-            const now = new Date();
-            const lastMonth = new Date();
-            lastMonth.setDate(now.getDate() - 30);
-            document.getElementById('end-date').value = now.toISOString().split('T')[0];
-            document.getElementById('start-date').value = lastMonth.toISOString().split('T')[0];
         });
 
-        // VIEW HELPERS
-        async function showDashboard() {
+        async function bootstrapAuthenticatedUser() {
+            const res = await apiGet('getProfile', { email: currentUser });
+            if (!res.success) {
+                currentUser = null;
+                currentProfile = null;
+                localStorage.removeItem('habitUser');
+                showLogin();
+                return;
+            }
+
+            applyCurrentProfile(res.user);
+            if (isProfileComplete(res.user)) {
+                await showDashboard(currentView);
+            } else {
+                showProfileSetup();
+            }
+        }
+
+        function showLogin() {
+            document.getElementById('login-section').classList.remove('hide');
+            document.getElementById('profile-section').classList.add('hide');
+            document.getElementById('dashboard-section').classList.add('hide');
+            document.getElementById('otp-request').classList.remove('hide');
+            document.getElementById('otp-verify').classList.add('hide');
+        }
+
+        function showProfileSetup() {
             document.getElementById('login-section').classList.add('hide');
+            document.getElementById('dashboard-section').classList.add('hide');
+            document.getElementById('profile-section').classList.remove('hide');
+            document.getElementById('profile-name-input').value = currentProfile?.name || '';
+            document.getElementById('profile-share-toggle').checked = currentProfile?.share_progress !== false;
+            updatePendingReferralNote();
+        }
+
+        async function showDashboard(view = 'progress') {
+            document.getElementById('login-section').classList.add('hide');
+            document.getElementById('profile-section').classList.add('hide');
             document.getElementById('dashboard-section').classList.remove('hide');
-            document.getElementById('user-display').textContent = currentUser;
-            
+            await switchView(view, { silent: true });
+            applyCurrentProfile(currentProfile);
             await fetchActivities();
             await checkActiveSession();
-            // Start with 30-day view by default
-            if (selectedActivityId) fetchLogs();
+            if (selectedActivityId) {
+                fetchLogs();
+            }
+            if (currentView === 'friends') {
+                await loadFriends();
+            }
         }
 
-        function toggleSettings() {
-            document.getElementById('settings-panel').classList.toggle('hide');
+        function applyCurrentProfile(user) {
+            if (!user) return;
+            currentProfile = user;
+            currentUser = user.email;
+            localStorage.setItem('habitUser', currentUser);
+            document.getElementById('user-display').textContent = truncateEmail(user.email);
+            document.getElementById('referral-code-display').textContent = user.referral_code || '------';
+            document.getElementById('dashboard-share-toggle').checked = user.share_progress !== false;
+            document.getElementById('profile-share-toggle').checked = user.share_progress !== false;
         }
 
-        function toggleCustomRange() {}
+        function isProfileComplete(user) {
+            return !!(user && user.name && user.name.trim());
+        }
+
+        function toggleSettings(forceState) {
+            const panel = document.getElementById('settings-panel');
+            const shouldShow = typeof forceState === 'boolean' ? forceState : panel.classList.contains('hide');
+            panel.classList.toggle('hide', !shouldShow);
+        }
+
+        function closeSettings() {
+            toggleSettings(false);
+        }
+
+        function toggleMenu() {
+            document.getElementById('menu-panel').classList.toggle('hide');
+        }
+
+        function closeMenu() {
+            document.getElementById('menu-panel').classList.add('hide');
+        }
+
+        async function switchView(view, options = {}) {
+            currentView = view;
+            document.getElementById('progress-view').classList.toggle('hide', view !== 'progress');
+            document.getElementById('friends-view').classList.toggle('hide', view !== 'friends');
+            closeMenu();
+
+            if (view === 'friends' && !options.silent) {
+                await loadFriends();
+            }
+        }
+
+        function handleDocumentClick(event) {
+            const menuPanel = document.getElementById('menu-panel');
+            const menuToggleBtn = document.getElementById('menu-toggle-btn');
+            if (!menuPanel || !menuToggleBtn) return;
+
+            if (!menuPanel.contains(event.target) && !menuToggleBtn.contains(event.target)) {
+                closeMenu();
+            }
+        }
+
+        function updatePendingReferralNote() {
+            const note = document.getElementById('pending-referral-note');
+            const codes = getPendingReferralCodes();
+            if (!note) return;
+
+            if (!codes.length) {
+                note.classList.add('hide');
+                note.textContent = '';
+                return;
+            }
+
+            note.classList.remove('hide');
+            note.textContent = `You joined through ${codes.length > 1 ? `${codes.length} friend links` : `friend link ${codes[0]}`}. Save your profile to connect automatically.`;
+        }
 
         function showToast(msg, type = 'info') {
             const toast = document.getElementById('toast');
@@ -326,99 +691,152 @@
             setTimeout(() => toast.classList.add('translate-y-32'), 3000);
         }
 
-        // AUTH
         async function requestOTP() {
-            const email = document.getElementById('email-input').value.trim();
+            const email = document.getElementById('email-input').value.trim().toLowerCase();
             if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) return showToast('Enter a valid email', 'error');
 
             const btn = document.getElementById('send-otp-btn');
-            btn.disabled = true;
-            btn.innerHTML = 'Sending code...';
-
-            try {
+            await withButtonLock(btn, { loadingText: 'Sending access code' }, async () => {
                 const res = await apiRequest({ action: 'sendOTP', email });
                 if (res.success) {
                     showToast('Check your email for the code');
                     document.getElementById('otp-request').classList.add('hide');
                     document.getElementById('otp-verify').classList.remove('hide');
+                } else {
+                    showToast(res.message || 'Backend connection failed', 'error');
                 }
-            } catch (err) {
-                showToast('Backend connection failed', 'error');
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<span>Get Access Code</span><i data-lucide="arrow-right" class="w-4 h-4"></i>';
-                lucide.createIcons();
-            }
+            });
         }
 
         async function verifyOTP() {
-            const email = document.getElementById('email-input').value.trim();
+            const email = document.getElementById('email-input').value.trim().toLowerCase();
             const otp = document.getElementById('otp-input').value.trim();
             if (otp.length < 6) return showToast('Enter 6-digit code', 'error');
 
             const btn = document.getElementById('verify-otp-btn');
-            btn.disabled = true;
-
-            try {
+            await withButtonLock(btn, { loadingText: 'Verifying access' }, async () => {
                 const res = await apiRequest({ action: 'verifyOTP', email, otp });
-                if (res.success) {
-                    currentUser = email;
-                    localStorage.setItem('habitUser', email);
-                    showDashboard();
-                } else {
-                    showToast('Invalid or expired code', 'error');
+                if (!res.success) {
+                    showToast(res.message || 'Invalid or expired code', 'error');
+                    return;
                 }
-            } catch (err) {
-                showToast('Verification failed', 'error');
-            } finally {
-                btn.disabled = false;
-            }
+
+                applyCurrentProfile(res.user);
+                if (res.profileComplete) {
+                    await showDashboard('progress');
+                } else {
+                    showProfileSetup();
+                }
+            });
+        }
+
+        async function completeProfileSetup() {
+            const name = document.getElementById('profile-name-input').value.trim();
+            if (!name) return showToast('Enter your name', 'error');
+
+            const btn = document.getElementById('complete-profile-btn');
+            await withButtonLock(btn, { loadingText: 'Saving profile' }, async () => {
+                const res = await apiRequest({
+                    action: 'completeProfile',
+                    email: currentUser,
+                    name,
+                    share_progress: document.getElementById('profile-share-toggle').checked,
+                    referral_codes: getPendingReferralCodes()
+                });
+
+                if (!res.success) {
+                    showToast(res.message || 'Could not save your profile', 'error');
+                    return;
+                }
+
+                clearPendingReferralCodes();
+                applyCurrentProfile(res.user);
+                friendsCache = null;
+                friendDashboardCache = {};
+                showToast('Profile saved');
+                await showDashboard('progress');
+            });
         }
 
         async function logout() {
-            if (currentUser) {
-                await apiRequest({ action: 'logout', email: currentUser });
-                localStorage.removeItem('habitUser');
-                location.reload();
-            }
+            if (!currentUser) return;
+            await apiRequest({ action: 'logout', email: currentUser });
+            localStorage.removeItem('habitUser');
+            currentUser = null;
+            currentProfile = null;
+            selectedActivityId = null;
+            activities = [];
+            friendsCache = null;
+            friendDashboardCache = {};
+            location.reload();
         }
 
-        // ACTIVITIES
         async function fetchActivities() {
-            try {
-                const res = await fetch(`${WEB_APP_URL}?action=getActivities&email=${currentUser}`);
-                activities = await res.json();
-                renderActivities();
-            } catch (err) {
+            const res = await apiGet('getActivities', { email: currentUser });
+            if (!Array.isArray(res)) {
                 showToast('Sync failed', 'error');
+                return;
             }
+
+            activities = res;
+            if (selectedActivityId && !activities.some(activity => activity.id === selectedActivityId)) {
+                selectedActivityId = null;
+                document.getElementById('active-habit-name').textContent = 'Select a habit to start';
+                document.getElementById('buzzer-btn').disabled = true;
+                document.getElementById('chain-grid').innerHTML = '';
+                document.getElementById('streak-counter').textContent = '0 Day Streak';
+            }
+            renderActivities();
         }
 
         function renderActivities() {
             const list = document.getElementById('activities-list');
             list.innerHTML = '';
-            
+            syncActivityLayout();
+
             if (activities.length === 0) {
-                list.innerHTML = '<p class="text-[10px] text-slate-500 text-center py-6 uppercase tracking-widest">No habits tracking yet</p>';
+                list.innerHTML = `
+                    <div class="flex flex-col items-center justify-center text-center rounded-3xl border border-dashed border-sky-500/25 bg-slate-900/20 px-6 py-10">
+                        <button onclick="toggleSettings(true)" class="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl border border-sky-400/35 bg-sky-500/10 text-sky-300 shadow-[0_0_25px_rgba(56,189,248,0.18)] transition hover:scale-105 hover:bg-sky-500/15">
+                            <i data-lucide="plus" class="w-7 h-7"></i>
+                        </button>
+                        <p class="text-sm font-semibold text-slate-100">Start your first habit</p>
+                        <p class="mt-2 text-[10px] uppercase tracking-[0.24em] text-slate-500">No habits tracking yet</p>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
             }
 
-            activities.forEach(a => {
+            activities.forEach(activity => {
                 const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-                const exDayIdx = a.exceptional_day !== undefined && a.exceptional_day !== 'None' ? parseInt(a.exceptional_day) : null;
-                const exDayLabel = (exDayIdx !== null && !isNaN(exDayIdx)) ? days[exDayIdx] : null;
-
-                const btn = document.createElement('button');
-                btn.className = `w-full text-left px-5 py-4 rounded-2xl transition-all flex items-center justify-between group ${selectedActivityId === a.id ? 'bg-sky-600/10 text-sky-400 border border-sky-500/30 ring-1 ring-sky-500/20' : 'hover:bg-slate-800/50 text-slate-400 border border-slate-700/50'}`;
-                btn.innerHTML = `
-                    <div class="flex flex-col">
-                        <span class="font-semibold text-sm group-hover:text-slate-300 transition-colors uppercase tracking-tight">${a.name}</span>
-                        ${exDayLabel ? `<span class="text-[8px] text-yellow-500 mt-0.5 uppercase tracking-tighter font-bold">Skip Day: ${exDayLabel}</span>` : ''}
-                    </div>
-                    <i data-lucide="chevron-right" class="w-4 h-4 opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0"></i>
+                const exDayIdx = activity.exceptional_day !== undefined && activity.exceptional_day !== 'None' ? parseInt(activity.exceptional_day, 10) : null;
+                const exDayLabel = exDayIdx !== null && !isNaN(exDayIdx) ? days[exDayIdx] : null;
+                const row = document.createElement('div');
+                row.className = 'flex items-stretch gap-2';
+                row.innerHTML = `
+                    <button type="button" class="activity-select-btn w-full text-left px-5 py-4 rounded-2xl transition-all flex items-center justify-between gap-3 group ${selectedActivityId === activity.id ? 'bg-sky-600/10 text-sky-400 border border-sky-500/30 ring-1 ring-sky-500/20' : 'hover:bg-slate-800/50 text-slate-400 border border-slate-700/50'}">
+                        <div class="flex min-w-0 flex-col">
+                            <span class="font-semibold text-sm group-hover:text-slate-300 transition-colors uppercase tracking-tight">${activity.name}</span>
+                            ${exDayLabel ? `<span class="text-[8px] text-yellow-500 mt-0.5 uppercase tracking-tighter font-bold">Skip Day: ${exDayLabel}</span>` : ''}
+                        </div>
+                        <i data-lucide="chevron-right" class="w-4 h-4 opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0"></i>
+                    </button>
+                    <button type="button" data-delete-id="${activity.id}" data-delete-name="${activity.name}" class="delete-activity-btn shrink-0 rounded-2xl border border-slate-700/70 px-3 text-slate-500 transition hover:border-red-500/40 hover:bg-red-500/10 hover:text-red-300">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
                 `;
-                btn.onclick = () => selectActivity(a);
-                list.appendChild(btn);
+                row.querySelector('.activity-select-btn').addEventListener('click', () => selectActivity(activity));
+                list.appendChild(row);
             });
+
+            list.querySelectorAll('.delete-activity-btn').forEach(btn => {
+                btn.addEventListener('click', event => {
+                    event.stopPropagation();
+                    deleteActivity(btn.dataset.deleteId, btn.dataset.deleteName, btn);
+                });
+            });
+
             lucide.createIcons();
         }
 
@@ -433,62 +851,124 @@
 
         async function createActivity() {
             const name = document.getElementById('new-activity-name').value.trim();
-            const exDay = document.getElementById('exceptional-day-select').value;
+            const exceptionalDay = document.getElementById('exceptional-day-select').value;
             if (!name) return showToast('Enter activity name', 'error');
 
-            try {
-                const res = await apiRequest({ action: 'createActivity', name, exceptional_day: exDay, email: currentUser });
-                if (res.success) {
-                    showToast('Habit Created');
-                    document.getElementById('new-activity-name').value = '';
-                    toggleSettings();
-                    await fetchActivities();
+            const btn = document.getElementById('create-activity-btn');
+            await withButtonLock(btn, { loadingText: 'Creating habit' }, async () => {
+                const res = await apiRequest({
+                    action: 'createActivity',
+                    name,
+                    exceptional_day: exceptionalDay,
+                    email: currentUser
+                });
+
+                if (!res.success) {
+                    showToast(res.message || 'Creation failed', 'error');
+                    return;
                 }
-            } catch (err) {
-                showToast('Creation failed', 'error');
-            }
+
+                document.getElementById('new-activity-name').value = '';
+                document.getElementById('exceptional-day-select').value = 'None';
+                closeSettings();
+                await fetchActivities();
+                showToast('Habit created');
+            });
         }
 
-        // SESSIONS
-        async function checkActiveSession() {
-            try {
-                const res = await fetch(`${WEB_APP_URL}?action=checkSession&email=${currentUser}`);
-                const session = await res.json();
-                if (session && session.activity_id) {
-                    selectedActivityId = session.activity_id;
-                    const act = activities.find(a => a.id === selectedActivityId) || { name: 'Running Session' };
-                    document.getElementById('active-habit-name').textContent = act.name;
-                    document.getElementById('buzzer-btn').disabled = false;
-                    
-                    startTime = new Date(session.startTime);
-                    isBuzzerRunning = true;
-                    startBuzzerUI();
+        async function deleteActivity(activityId, activityName, btn) {
+            if (isBuzzerRunning && selectedActivityId === activityId) {
+                showToast('Stop the active session before deleting this habit', 'error');
+                return;
+            }
+            if (!window.confirm(`Delete "${activityName}" and all of its logs? This cannot be undone.`)) return;
+
+            await withButtonLock(btn, { loadingText: 'Deleting', cooldownMs: 10000 }, async () => {
+                const res = await apiRequest({ action: 'deleteActivity', activity_id: activityId, email: currentUser });
+                if (!res.success) {
+                    showToast(res.message || 'Delete failed', 'error');
+                    return;
                 }
-            } catch (e) { console.error('Persistence check failed', e); }
+
+                if (selectedActivityId === activityId) {
+                    selectedActivityId = null;
+                    document.getElementById('active-habit-name').textContent = 'Select a habit to start';
+                    document.getElementById('buzzer-btn').disabled = true;
+                    document.getElementById('chain-grid').innerHTML = '';
+                    document.getElementById('streak-counter').textContent = '0 Day Streak';
+                }
+
+                activities = activities.filter(activity => activity.id !== activityId);
+                renderActivities();
+                showToast('Habit deleted');
+            });
+        }
+
+        async function checkActiveSession() {
+            const session = await apiGet('checkSession', { email: currentUser });
+            if (!session || !session.activity_id) return;
+
+            selectedActivityId = session.activity_id;
+            const activeHabit = activities.find(activity => activity.id === selectedActivityId) || { name: 'Running Session' };
+            document.getElementById('active-habit-name').textContent = activeHabit.name;
+            document.getElementById('buzzer-btn').disabled = false;
+            startTime = new Date(session.startTime);
+            isBuzzerRunning = true;
+            startBuzzerUI();
         }
 
         async function toggleBuzzer() {
-            if (!isBuzzerRunning) {
-                isBuzzerRunning = true;
-                startTime = new Date();
-                startBuzzerUI();
-                await apiRequest({ action: 'logBuzzer', action_type: 'BUZZER_START', activity_id: selectedActivityId, email: currentUser });
-            } else {
-                isBuzzerRunning = false;
-                const duration = Math.floor((new Date() - startTime) / 1000);
-                stopBuzzerUI();
-                await apiRequest({ action: 'logBuzzer', action_type: 'BUZZER_STOP', activity_id: selectedActivityId, email: currentUser, duration, status: 'DONE' });
-                showToast('Activity Recorded ✓');
-                fetchLogs();
+            if (buzzerRequestInFlight || !selectedActivityId) return;
+            buzzerRequestInFlight = true;
+
+            try {
+                if (!isBuzzerRunning) {
+                    isBuzzerRunning = true;
+                    startTime = new Date();
+                    startBuzzerUI();
+                    const res = await apiRequest({
+                        action: 'logBuzzer',
+                        action_type: 'BUZZER_START',
+                        activity_id: selectedActivityId,
+                        email: currentUser
+                    });
+                    if (!res.success) {
+                        isBuzzerRunning = false;
+                        stopBuzzerUI();
+                        showToast('Could not start session', 'error');
+                    }
+                } else {
+                    isBuzzerRunning = false;
+                    const duration = Math.floor((new Date() - startTime) / 1000);
+                    stopBuzzerUI();
+                    const res = await apiRequest({
+                        action: 'logBuzzer',
+                        action_type: 'BUZZER_STOP',
+                        activity_id: selectedActivityId,
+                        email: currentUser,
+                        duration,
+                        status: 'DONE'
+                    });
+                    if (!res.success) {
+                        showToast('Could not save session', 'error');
+                        return;
+                    }
+                    showToast('Activity recorded');
+                    fetchLogs();
+                }
+            } finally {
+                buzzerRequestInFlight = false;
             }
         }
 
         function startBuzzerUI() {
             const btn = document.getElementById('buzzer-btn');
+            clearInterval(timerInterval);
             btn.classList.add('buzzer-active', 'border-sky-500');
             document.getElementById('buzzer-status').textContent = 'Live Session';
             document.getElementById('timer-display').classList.remove('opacity-0');
             timerInterval = setInterval(updateTimer, 1000);
+            updateTimer();
         }
 
         function stopBuzzerUI() {
@@ -499,50 +979,50 @@
         }
 
         function updateTimer() {
+            if (!startTime) return;
             const diff = Math.floor((new Date() - startTime) / 1000);
-            const m = Math.floor(diff / 60).toString().padStart(2, '0');
-            const s = (diff % 60).toString().padStart(2, '0');
-            document.getElementById('timer-display').textContent = `${m}:${s}`;
+            const minutes = Math.floor(diff / 60).toString().padStart(2, '0');
+            const seconds = (diff % 60).toString().padStart(2, '0');
+            document.getElementById('timer-display').textContent = `${minutes}:${seconds}`;
         }
 
-        // VISUALIZER
         async function fetchLogs() {
             if (!selectedActivityId) return;
-            try {
-                const res = await fetch(`${WEB_APP_URL}?action=getLogs&activity_id=${selectedActivityId}&email=${currentUser}`);
-                const logs = await res.json();
-                renderChain(logs);
-            } catch (err) { console.error(err); }
+            const logs = await apiGet('getLogs', { activity_id: selectedActivityId, email: currentUser });
+            if (!Array.isArray(logs)) return;
+            renderChain(logs);
         }
 
         function setChainRange(days) {
             currentRange = days;
             customMode = false;
-            document.querySelectorAll('.range-btn').forEach(b => {
-                const bDays = parseInt(b.textContent);
-                b.className = (bDays === days) ? 'range-btn active px-3 py-1 text-[10px] font-bold rounded-lg border border-sky-500 bg-sky-500/10 text-sky-400 transition-all uppercase' : 'range-btn px-3 py-1 text-[10px] font-bold rounded-lg border border-slate-700 hover:border-sky-500/50 transition-all uppercase';
+            document.querySelectorAll('.range-btn').forEach(button => {
+                const buttonDays = parseInt(button.textContent, 10);
+                button.className = buttonDays === days
+                    ? 'range-btn active px-3 py-1 text-[10px] font-bold rounded-lg border border-sky-500 bg-sky-500/10 text-sky-400 transition-all uppercase'
+                    : 'range-btn px-3 py-1 text-[10px] font-bold rounded-lg border border-slate-700 hover:border-sky-500/50 transition-all uppercase';
             });
             fetchLogs();
         }
 
-
-
         function renderChain(logs = []) {
             const grid = document.getElementById('chain-grid');
             grid.innerHTML = '';
-            
-            const now = new Date();
-            const logDates = new Set(logs.map(l => new Date(l.timestamp).toDateString()));
-            const activity = activities.find(a => a.id === selectedActivityId);
-            
+
+            const logDates = new Set(logs.map(log => new Date(log.timestamp).toDateString()));
+            const activity = activities.find(item => item.id === selectedActivityId);
             let daysToRender = currentRange;
             let startDate = new Date();
-            
+
             if (customMode) {
-                const d1 = new Date(document.getElementById('start-date').value);
-                const d2 = new Date(document.getElementById('end-date').value);
-                daysToRender = Math.floor((d2 - d1) / (1000 * 3600 * 24)) + 1;
-                startDate = d2;
+                const startInput = document.getElementById('start-date');
+                const endInput = document.getElementById('end-date');
+                if (startInput && endInput) {
+                    const d1 = new Date(startInput.value);
+                    const d2 = new Date(endInput.value);
+                    daysToRender = Math.floor((d2 - d1) / (1000 * 3600 * 24)) + 1;
+                    startDate = d2;
+                }
             }
 
             let streak = 0;
@@ -553,19 +1033,21 @@
                 date.setDate(startDate.getDate() - i);
                 const dateStr = date.toDateString();
                 const isLogged = logDates.has(dateStr);
-                const exDayIdx = (activity && activity.exceptional_day !== undefined && activity.exceptional_day !== 'None') ? parseInt(activity.exceptional_day) : null;
+                const exDayIdx = activity && activity.exceptional_day !== undefined && activity.exceptional_day !== 'None'
+                    ? parseInt(activity.exceptional_day, 10)
+                    : null;
                 const isExDay = exDayIdx !== null && !isNaN(exDayIdx) && date.getDay() === exDayIdx;
 
                 const box = document.createElement('div');
                 box.className = `chain-box ${isLogged ? 'active' : (isExDay ? 'exceptional' : 'empty')} flex flex-col items-center justify-center select-none p-1`;
                 box.style.color = isLogged ? '#ffffff' : (isExDay ? '#000000' : '#94a3b8');
-                
-                const monthNames = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+
+                const monthNames = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
                 box.innerHTML = `
                     <span class="text-[13px] font-bold leading-none">${date.getDate()}</span>
                     <span class="text-[9px] opacity-70 font-semibold tracking-tight">${monthNames[date.getMonth()]}</span>
                 `;
-                
+
                 const tooltip = document.createElement('span');
                 tooltip.className = 'date-tooltip';
                 tooltip.textContent = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -576,10 +1058,316 @@
 
                 grid.insertBefore(box, grid.firstChild);
             }
+
             document.getElementById('streak-counter').textContent = `${streak} Day Streak`;
         }
 
-        // UTILS
+        async function loadFriends(forceRefresh = false) {
+            if (!currentProfile) return;
+            if (friendsCache && !forceRefresh) {
+                renderFriendsList(friendsCache);
+                return;
+            }
+
+            const res = await apiGet('getFriends', { email: currentUser });
+            if (!res.success) {
+                showToast(res.message || 'Could not load friends', 'error');
+                return;
+            }
+
+            friendsCache = res.friends || [];
+            if (selectedFriendId && !friendsCache.some(friend => friend.user_id === selectedFriendId)) {
+                selectedFriendId = null;
+                showEmptyFriendDashboard();
+            }
+            renderFriendsList(friendsCache);
+        }
+
+        function renderFriendsList(friends) {
+            const list = document.getElementById('friends-list');
+            list.innerHTML = '';
+
+            if (!friends.length) {
+                list.innerHTML = `
+                    <div class="rounded-3xl border border-dashed border-sky-500/25 bg-slate-900/20 px-5 py-8 text-center">
+                        <p class="text-lg font-semibold text-slate-100">No friends yet</p>
+                        <p class="mt-2 text-sm text-slate-400">Share your invite link to start building a habit circle.</p>
+                        <button onclick="shareReferral()" class="mt-5 rounded-xl bg-sky-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-sky-500">
+                            Share Invite
+                        </button>
+                    </div>
+                `;
+                lucide.createIcons();
+                showEmptyFriendDashboard();
+                return;
+            }
+
+            friends.forEach(friend => {
+                const card = document.createElement('button');
+                card.type = 'button';
+                card.className = `w-full rounded-2xl border px-4 py-4 text-left transition ${selectedFriendId === friend.user_id ? 'border-sky-500/40 bg-sky-500/10' : 'border-slate-700/60 bg-slate-900/25 hover:border-sky-500/30 hover:bg-slate-800/40'}`;
+                card.innerHTML = `
+                    <div class="flex items-center justify-between gap-3">
+                        <div>
+                            <p class="text-sm font-semibold text-slate-100">${friend.name || 'User123'}</p>
+                            <p class="text-xs text-slate-500 mt-1">${truncateEmail(friend.email || '')}</p>
+                        </div>
+                        <i data-lucide="chevron-right" class="w-4 h-4 text-slate-500"></i>
+                    </div>
+                `;
+                card.addEventListener('click', () => openFriendDashboard(friend.user_id));
+                list.appendChild(card);
+            });
+
+            lucide.createIcons();
+        }
+
+        async function openFriendDashboard(friendUserId) {
+            selectedFriendId = friendUserId;
+            renderFriendsList(friendsCache || []);
+
+            if (friendDashboardCache[friendUserId]) {
+                renderFriendDashboard(friendDashboardCache[friendUserId]);
+                return;
+            }
+
+            const res = await apiGet('getFriendDashboard', { email: currentUser, friend_user_id: friendUserId });
+            if (!res.success) {
+                showToast(res.message || 'Could not load friend dashboard', 'error');
+                showEmptyFriendDashboard();
+                return;
+            }
+
+            friendDashboardCache[friendUserId] = res.friend;
+            renderFriendDashboard(res.friend);
+        }
+
+        function showEmptyFriendDashboard() {
+            document.getElementById('friend-dashboard-empty').classList.remove('hide');
+            document.getElementById('friend-dashboard-content').classList.add('hide');
+            document.getElementById('friend-dashboard-content').innerHTML = '';
+        }
+
+        function renderFriendDashboard(friend) {
+            const emptyState = document.getElementById('friend-dashboard-empty');
+            const content = document.getElementById('friend-dashboard-content');
+
+            emptyState.classList.add('hide');
+            content.classList.remove('hide');
+
+            const habitsMarkup = (friend.habits || []).length
+                ? friend.habits.map(habit => {
+                    const streak = calculateStreak(habit.logs || [], habit.exceptional_day);
+                    const sessions = (habit.logs || []).length;
+                    return `
+                        <div class="rounded-3xl border border-slate-700/70 bg-slate-900/30 p-5">
+                            <div class="flex flex-wrap items-start justify-between gap-4 mb-4">
+                                <div>
+                                    <p class="text-lg font-semibold text-slate-100">${habit.name}</p>
+                                    <p class="text-xs uppercase tracking-[0.22em] text-slate-500 mt-1">${sessions} sessions logged</p>
+                                </div>
+                                <div class="rounded-2xl border border-sky-500/25 bg-sky-500/10 px-4 py-2 text-right">
+                                    <p class="text-[10px] uppercase tracking-[0.22em] text-sky-300">Current Streak</p>
+                                    <p class="text-lg font-bold text-sky-100">${streak} days</p>
+                                </div>
+                            </div>
+                            ${buildFriendCalendar(habit.logs || [], habit.exceptional_day)}
+                        </div>
+                    `;
+                }).join('')
+                : `
+                    <div class="rounded-3xl border border-dashed border-slate-700/60 bg-slate-900/20 px-6 py-12 text-center">
+                        <p class="text-lg font-semibold text-slate-100">${friend.name} has not added any habits yet.</p>
+                    </div>
+                `;
+
+            content.innerHTML = `
+                <div class="space-y-6">
+                    <div class="flex flex-wrap items-start justify-between gap-4">
+                        <div>
+                            <p class="text-[10px] uppercase tracking-[0.35em] text-slate-500">Read Only</p>
+                            <h3 class="text-3xl font-bold tracking-tight mt-3">${friend.name}</h3>
+                            <p class="text-sm text-slate-400 mt-2">Recent progress across each habit. Editing stays locked to the owner.</p>
+                        </div>
+                        <div class="rounded-2xl border border-slate-700/70 bg-slate-900/35 px-4 py-3">
+                            <p class="text-[10px] uppercase tracking-[0.24em] text-slate-500">Habits Shared</p>
+                            <p class="text-2xl font-bold text-slate-100 mt-1">${(friend.habits || []).length}</p>
+                        </div>
+                    </div>
+                    ${habitsMarkup}
+                </div>
+            `;
+        }
+
+        function buildFriendCalendar(logs, exceptionalDay, days = 30) {
+            const logDates = new Set(logs.map(log => new Date(log.timestamp).toDateString()));
+            const exDayIdx = exceptionalDay !== undefined && exceptionalDay !== 'None' ? parseInt(exceptionalDay, 10) : null;
+            const cells = [];
+
+            for (let index = days - 1; index >= 0; index--) {
+                const date = new Date();
+                date.setDate(date.getDate() - index);
+                const dateStr = date.toDateString();
+                const isLogged = logDates.has(dateStr);
+                const isExceptional = exDayIdx !== null && !isNaN(exDayIdx) && date.getDay() === exDayIdx;
+                const classes = ['friend-chain-cell'];
+                if (isLogged) classes.push('active');
+                else if (isExceptional) classes.push('exceptional');
+                cells.push(`<div class="${classes.join(' ')}" title="${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}"></div>`);
+            }
+
+            return `
+                <div>
+                    <div class="friend-chain-grid">${cells.join('')}</div>
+                    <div class="mt-4 flex items-center gap-4 text-[10px] uppercase tracking-[0.2em] text-slate-500">
+                        <span class="flex items-center gap-2"><span class="inline-block w-2.5 h-2.5 rounded-sm bg-green-500"></span>Done</span>
+                        <span class="flex items-center gap-2"><span class="inline-block w-2.5 h-2.5 rounded-sm bg-yellow-500"></span>Rest</span>
+                        <span class="flex items-center gap-2"><span class="inline-block w-2.5 h-2.5 rounded-sm bg-slate-600"></span>Missed</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function calculateStreak(logs, exceptionalDay) {
+            const logDates = new Set(logs.map(log => new Date(log.timestamp).toDateString()));
+            const exDayIdx = exceptionalDay !== undefined && exceptionalDay !== 'None' ? parseInt(exceptionalDay, 10) : null;
+            let streak = 0;
+
+            for (let offset = 0; offset < 365; offset++) {
+                const date = new Date();
+                date.setDate(date.getDate() - offset);
+                const dateStr = date.toDateString();
+                const isLogged = logDates.has(dateStr);
+                const isExceptional = exDayIdx !== null && !isNaN(exDayIdx) && date.getDay() === exDayIdx;
+
+                if (isLogged) {
+                    streak++;
+                    continue;
+                }
+
+                if (offset === 0 && isExceptional) continue;
+                if (isExceptional) continue;
+                break;
+            }
+
+            return streak;
+        }
+
+        async function shareReferral() {
+            if (!currentProfile?.referral_code) {
+                showToast('Referral code is still loading', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('share-referral-btn');
+            const url = buildReferralUrl();
+            const text = `I’m building better habits daily.\nJoin me and track your progress too:\n${url}`;
+
+            await withButtonLock(btn, { loadingText: 'Preparing invite', cooldownMs: 10000 }, async () => {
+                try {
+                    if (navigator.share) {
+                        await navigator.share({
+                            title: 'HabitApp Invite',
+                            text,
+                            url
+                        });
+                        showToast('Invite ready to share');
+                        return;
+                    }
+
+                    if (navigator.clipboard?.writeText) {
+                        await navigator.clipboard.writeText(text);
+                        showToast('Invite copied to clipboard');
+                        return;
+                    }
+
+                    showToast(url);
+                } catch (error) {
+                    if (error && error.name === 'AbortError') return;
+                    showToast('Could not open the share sheet', 'error');
+                }
+            });
+        }
+
+        function buildReferralUrl() {
+            const baseUrl = location.protocol === 'file:'
+                ? 'https://habitapp.dhairyamehta.in/'
+                : `${location.origin}${location.pathname}`;
+            return `${baseUrl}?ref=${currentProfile.referral_code}`;
+        }
+
+        async function handleDashboardShareToggle(input) {
+            if (shareToggleBusy || !currentProfile) {
+                input.checked = currentProfile?.share_progress !== false;
+                return;
+            }
+
+            shareToggleBusy = true;
+            input.disabled = true;
+            const nextValue = input.checked;
+
+            const res = await apiRequest({
+                action: 'updateShareSettings',
+                email: currentUser,
+                share_progress: nextValue
+            });
+
+            if (!res.success) {
+                input.checked = currentProfile.share_progress !== false;
+                showToast(res.message || 'Could not update privacy setting', 'error');
+            } else {
+                applyCurrentProfile(res.user);
+                friendsCache = null;
+                if (currentView === 'friends') {
+                    await loadFriends(true);
+                }
+                if (!nextValue) showToast('Your progress is now hidden from friend lists');
+                else showToast('Your progress is now visible to friends');
+            }
+
+            input.disabled = false;
+            shareToggleBusy = false;
+        }
+
+        function captureReferralCodeFromUrl() {
+            try {
+                const url = new URL(location.href);
+                const code = (url.searchParams.get('ref') || '').trim().toUpperCase();
+                if (code) {
+                    storeReferralCode(code);
+                    url.searchParams.delete('ref');
+                    if (location.protocol !== 'file:') {
+                        window.history.replaceState({}, document.title, url.toString());
+                    }
+                }
+            } catch (error) {
+                console.warn('Referral capture skipped', error);
+            }
+        }
+
+        function getPendingReferralCodes() {
+            try {
+                const raw = localStorage.getItem(REFERRAL_STORAGE_KEY);
+                const parsed = raw ? JSON.parse(raw) : [];
+                return Array.isArray(parsed) ? parsed : [];
+            } catch (error) {
+                return [];
+            }
+        }
+
+        function storeReferralCode(code) {
+            if (!code) return;
+            const codes = getPendingReferralCodes();
+            if (!codes.includes(code)) {
+                codes.push(code);
+                localStorage.setItem(REFERRAL_STORAGE_KEY, JSON.stringify(codes));
+            }
+        }
+
+        function clearPendingReferralCodes() {
+            localStorage.removeItem(REFERRAL_STORAGE_KEY);
+        }
+
         async function apiRequest(body) {
             try {
                 const res = await fetch(WEB_APP_URL, {
@@ -587,9 +1375,93 @@
                     headers: { 'Content-Type': 'text/plain' },
                     body: JSON.stringify(body)
                 });
-                const txt = await res.text();
-                try { return JSON.parse(txt); } catch(e) { return { success: true }; }
-            } catch (e) { return { success: true }; }
+                const text = await res.text();
+                try {
+                    return JSON.parse(text);
+                } catch (error) {
+                    return { success: false, message: 'Invalid server response' };
+                }
+            } catch (error) {
+                return { success: false, message: 'Network request failed' };
+            }
+        }
+
+        async function apiGet(action, params = {}) {
+            try {
+                const url = new URL(WEB_APP_URL);
+                url.searchParams.set('action', action);
+                Object.entries(params).forEach(([key, value]) => {
+                    if (value !== undefined && value !== null && value !== '') {
+                        url.searchParams.set(key, value);
+                    }
+                });
+                const res = await fetch(url.toString());
+                const text = await res.text();
+                try {
+                    return JSON.parse(text);
+                } catch (error) {
+                    return { success: false, message: 'Invalid server response' };
+                }
+            } catch (error) {
+                return { success: false, message: 'Network request failed' };
+            }
+        }
+
+        async function withButtonLock(button, options, action) {
+            if (!button || button.dataset.locked === 'true') return;
+
+            const settings = {
+                baseHtml: button.dataset.baseHtml || button.innerHTML,
+                loadingText: 'Processing',
+                cooldownMs: CTA_COOLDOWN_MS,
+                ...options
+            };
+
+            button.dataset.locked = 'true';
+            button.disabled = true;
+            button.classList.add('btn-loading');
+            button.innerHTML = settings.loadingText;
+
+            const start = Date.now();
+            try {
+                await action();
+            } finally {
+                const remaining = Math.max(settings.cooldownMs - (Date.now() - start), 0);
+                window.setTimeout(() => {
+                    button.dataset.locked = 'false';
+                    button.disabled = false;
+                    button.classList.remove('btn-loading');
+                    button.innerHTML = settings.baseHtml;
+                    lucide.createIcons();
+                }, remaining);
+            }
+        }
+
+        function truncateEmail(email) {
+            if (!email || email.length <= 28) return email || '';
+            const [name, domain] = email.split('@');
+            if (!domain) return `${email.slice(0, 25)}...`;
+            const compactName = name.length > 10 ? `${name.slice(0, 7)}...` : name;
+            return `${compactName}@${domain}`;
+        }
+
+        function syncActivityLayout() {
+            const card = document.getElementById('activities-card');
+            const openBtn = document.getElementById('open-settings-btn');
+            const list = document.getElementById('activities-list');
+            if (!card || !openBtn || !list) return;
+
+            const hasActivities = activities.length > 0;
+            card.classList.toggle('activity-card-compact', !hasActivities);
+            card.classList.toggle('min-h-[400px]', hasActivities);
+            openBtn.classList.toggle('bg-sky-500/10', !hasActivities);
+            openBtn.classList.toggle('text-sky-300', !hasActivities);
+            openBtn.classList.toggle('border', !hasActivities);
+            openBtn.classList.toggle('border-sky-500/30', !hasActivities);
+            openBtn.classList.toggle('scale-110', !hasActivities);
+            list.classList.toggle('max-h-[28rem]', activities.length > 5);
+            list.classList.toggle('overflow-y-auto', activities.length > 5);
+            list.classList.toggle('pr-1', activities.length > 5);
         }
     </script>
 </body>
