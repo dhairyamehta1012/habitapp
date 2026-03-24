@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HabitApp | Build Powerful Habits Daily</title>
+    <meta name="description" content="HabitApp by Dhairya Mehta — a premium, private habit tracker that visualises your consistency with The Chain. Secure OTP login, no passwords.">
+    <meta name="author" content="Dhairya Mehta">
+    <meta name="robots" content="index, follow">
+    <!-- Open Graph / Social -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://habitapp.dhairyamehta.in">
+    <meta property="og:title" content="HabitApp | Build Powerful Habits Daily">
+    <meta property="og:description" content="Track your habits privately and beautifully. Visualise streaks, set rest days, and never break The Chain.">
+    <meta property="og:image" content="https://habitapp.dhairyamehta.in/favicon/android-chrome-512x512.png">
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="HabitApp | Build Powerful Habits Daily">
+    <meta name="twitter:description" content="Track your habits privately and beautifully. Visualise streaks, set rest days, and never break The Chain.">
+    <meta name="twitter:image" content="https://habitapp.dhairyamehta.in/favicon/android-chrome-512x512.png">
+    <link rel="manifest" href="favicon/site.webmanifest">
+    <link rel="icon" type="image/x-icon" href="favicon/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon/favicon-16x16.png">
+    <link rel="apple-touch-icon" href="favicon/apple-touch-icon.png">
+    <meta name="theme-color" content="#0f172a">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+            overflow-x: hidden;
+            margin: 0;
+            padding: 0;
+        }
+        .glass {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .btn-glow:hover {
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+            transform: translateY(-2px);
+        }
+        .buzzer-active {
+            animation: pulse-glow 2s infinite;
+        }
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 0 20px rgba(56, 189, 248, 0.4); }
+            50% { box-shadow: 0 0 50px rgba(56, 189, 248, 0.8); }
+            100% { box-shadow: 0 0 20px rgba(56, 189, 248, 0.4); }
+        }
+        .chain-box {
+            aspect-ratio: 1;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        .chain-box.active {
+            background-color: #22c55e;
+            box-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
+        }
+        .chain-box.empty { background-color: #334155; }
+        .chain-box.exceptional {
+            background-color: #eab308;
+            box-shadow: 0 0 10px rgba(234, 179, 8, 0.3);
+        }
+        .chain-box:hover .date-tooltip { opacity: 1; visibility: visible; }
+        .date-tooltip {
+            position: absolute;
+            bottom: 120%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s;
+            z-index: 10;
+            border: 1px solid #334155;
+        }
+        .hide { display: none !important; }
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-[#0f172a]">
+
+    <!-- LOGIN SECTION -->
+    <div id="login-section" class="min-h-screen flex flex-col items-center justify-center p-6 fade-in">
+        <div class="w-full max-w-md glass p-8 rounded-3xl shadow-2xl">
+            <div class="text-center mb-10">
+                <div class="flex items-center justify-center gap-3 mb-3">
+                    <img src="favicon/favicon-32x32.png" alt="HabitApp Logo"
+                        class="w-10 h-10 rounded-xl shadow-[0_0_20px_rgba(56,189,248,0.35)] transition-transform duration-300 hover:scale-110 hover:shadow-[0_0_30px_rgba(56,189,248,0.5)]">
+                    <h1 class="text-3xl font-bold tracking-tight">Habit<span class="text-sky-400">App</span></h1>
+                </div>
+                <p class="text-slate-500 text-sm font-medium uppercase tracking-widest">by Dhairya Mehta</p>
+            </div>
+            
+            <div id="otp-request">
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-slate-400 mb-2">Email Address</label>
+                    <input type="email" id="email-input" placeholder="name@example.com" 
+                        class="w-full bg-slate-800/50 border border-slate-700/50 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all text-slate-200">
+                </div>
+                <button onclick="requestOTP()" id="send-otp-btn"
+                    class="w-full bg-sky-600 hover:bg-sky-500 text-white font-semibold py-3 rounded-xl btn-glow transition-all flex items-center justify-center space-x-2">
+                    <span>Get Access Code</span>
+                    <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <div id="otp-verify" class="hide">
+                <div class="mb-6 text-center">
+                    <label class="block text-sm font-medium text-slate-400 mb-4">Check your Email</label>
+                    <input type="text" maxlength="6" id="otp-input" placeholder="000000" 
+                        class="w-full bg-slate-800/50 border border-slate-700/50 rounded-xl px-4 py-3 text-center text-3xl tracking-[0.5em] font-bold focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all text-sky-400">
+                    <p class="text-[10px] text-slate-600 mt-4 uppercase tracking-tighter">Enter the 6-digit code sent to your inbox</p>
+                </div>
+                <button onclick="verifyOTP()" id="verify-otp-btn"
+                    class="w-full bg-sky-600 hover:bg-sky-500 text-white font-semibold py-3 rounded-xl btn-glow transition-all">
+                    Verify & Access
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- DASHBOARD SECTION -->
+    <div id="dashboard-section" class="hide min-h-screen flex flex-col p-4 md:p-8 max-w-7xl mx-auto space-y-6 fade-in">
+        <!-- Header -->
+        <header class="flex justify-between items-center glass px-6 py-4 rounded-2xl w-full">
+            <div class="flex items-center gap-3">
+                <img src="favicon/favicon-32x32.png" alt="logo"
+                    class="w-8 h-8 rounded-lg shadow-[0_0_12px_rgba(56,189,248,0.3)]">
+                <div class="flex flex-col">
+                    <h1 class="text-xl font-bold leading-tight">Habit<span class="text-sky-400">App</span></h1>
+                    <span class="text-[10px] text-slate-500 uppercase tracking-widest">by Dhairya Mehta</span>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3 md:space-x-6">
+                <div id="user-info" class="flex flex-col items-end">
+                    <span id="user-display" class="text-[10px] md:text-sm font-medium text-slate-300 truncate max-w-[100px] md:max-w-none"></span>
+                    <span class="text-[8px] md:text-[10px] border border-sky-500/30 px-2 py-0.5 rounded-full text-sky-400 uppercase tracking-tighter md:tracking-normal">Authenticated</span>
+                </div>
+                <button onclick="logout()" class="p-2 md:p-2.5 hover:bg-slate-800/50 rounded-xl transition-all border border-slate-700/50">
+                    <i data-lucide="log-out" class="w-4 h-4 md:w-5 h-5 text-slate-400"></i>
+                </button>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Sidebar: Activities -->
+            <div class="space-y-6">
+                <div class="glass p-6 rounded-3xl min-h-[400px]">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-lg font-semibold flex items-center gap-2">
+                             <i data-lucide="list-todo" class="w-5 h-5 text-sky-400"></i>
+                             Activities
+                        </h2>
+                        <button onclick="toggleSettings()" class="p-2 hover:bg-slate-800/50 rounded-lg text-slate-500 hover:text-sky-400 transition-all">
+                            <i data-lucide="plus" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                    
+                    <div id="settings-panel" class="hide mb-6 p-5 bg-slate-800/30 rounded-2xl border border-sky-500/20 fade-in">
+                        <h3 class="text-[10px] uppercase tracking-widest text-slate-500 mb-3 font-bold">New Activity</h3>
+                        <input type="text" id="new-activity-name" placeholder="Name (e.g. Gym)"
+                            class="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-2 mb-3 focus:outline-none focus:ring-1 focus:ring-sky-500 text-sm">
+                        
+                        <div class="mb-4">
+                            <label class="text-[10px] uppercase tracking-widest text-slate-500 mb-2 block font-bold">Exceptional Day (Optional)</label>
+                            <select id="exceptional-day-select" class="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-2 text-sm text-slate-400 focus:outline-none focus:ring-1 focus:ring-sky-500">
+                                <option value="None">None</option>
+                                <option value="0">Sunday</option>
+                                <option value="1">Monday</option>
+                                <option value="2">Tuesday</option>
+                                <option value="3">Wednesday</option>
+                                <option value="4">Thursday</option>
+                                <option value="5">Friday</option>
+                                <option value="6">Saturday</option>
+                            </select>
+                        </div>
+
+                        <button onclick="createActivity()" 
+                            class="w-full bg-sky-600 hover:bg-sky-500 text-[10px] font-bold py-2.5 rounded-xl transition-all uppercase tracking-wider">
+                            Confirm Habit
+                        </button>
+                    </div>
+
+                    <div id="activities-list" class="space-y-3">
+                        <div class="animate-pulse bg-slate-800/50 h-14 rounded-xl"></div>
+                        <div class="animate-pulse bg-slate-800/50 h-14 rounded-xl"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content: Buzzer & The Chain -->
+            <div class="md:col-span-2 space-y-6">
+                <!-- Buzzer Card -->
+                <div class="glass p-8 md:p-12 rounded-3xl flex flex-col items-center justify-center text-center relative overflow-hidden">
+                    <div id="active-habit-name" class="text-sky-400 font-semibold text-lg uppercase tracking-widest mb-8">Select a habit to start</div>
+                    
+                    <button id="buzzer-btn" onclick="toggleBuzzer()" disabled
+                        class="w-48 h-48 md:w-56 md:h-56 rounded-full bg-slate-800 border-4 border-slate-700 flex flex-col items-center justify-center transition-all duration-500 relative z-10 disabled:opacity-30 disabled:grayscale group shadow-2xl">
+                        <div id="buzzer-status" class="text-xs font-bold tracking-[0.2em] text-slate-500 group-hover:text-slate-300 uppercase">Start Session</div>
+                        <div id="timer-display" class="text-4xl md:text-5xl font-mono mt-2 opacity-0 transition-all text-sky-400">00:00</div>
+                    </button>
+
+                 </div>
+
+                <!-- The Chain Card -->
+                <div class="glass p-6 md:p-8 rounded-3xl">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+                        <div>
+                            <h2 class="text-xl font-bold flex items-center gap-2">
+                                <i data-lucide="link" class="w-5 h-5 text-sky-400"></i>
+                                The Chain
+                            </h2>
+                            <p class="text-[10px] text-slate-500 uppercase tracking-widest mt-1">Consistency History</p>
+                        </div>
+                        <div class="flex flex-col sm:items-end gap-2">
+                            <div class="flex gap-1 overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0">
+                                <button onclick="setChainRange(7)" class="range-btn px-3 py-1 text-[10px] font-bold rounded-lg border border-slate-700 hover:border-sky-500/50 transition-all uppercase">7d</button>
+                                <button onclick="setChainRange(30)" class="range-btn active px-3 py-1 text-[10px] font-bold rounded-lg border border-sky-500 bg-sky-500/10 text-sky-400 transition-all uppercase">30d</button>
+                                <button onclick="setChainRange(90)" class="range-btn px-3 py-1 text-[10px] font-bold rounded-lg border border-slate-700 hover:border-sky-500/50 transition-all uppercase">90d</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="chain-grid" class="grid grid-cols-7 sm:grid-cols-10 md:grid-cols-14 lg:grid-cols-15 gap-2 md:gap-3">
+                        <!-- Grid dynamic -->
+                    </div>
+
+                    <div class="mt-8 flex flex-wrap justify-between items-center gap-4 border-t border-slate-800 pt-6">
+                        <div class="flex flex-col">
+                            <span class="text-[10px] text-slate-500 uppercase tracking-widest italic">Growth Stat</span>
+                            <div class="text-lg font-bold text-sky-400" id="streak-counter">0 Day Streak</div>
+                        </div>
+                        <div class="flex items-center space-x-4 md:space-x-6">
+                            <div class="flex items-center space-x-2">
+                                <span class="w-3 h-3 rounded-sm bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]"></span>
+                                <span class="text-[8px] md:text-[10px] font-bold text-slate-400 uppercase tracking-tight">Success</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="w-3 h-3 rounded-sm bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.4)]"></span>
+                                <span class="text-[8px] md:text-[10px] font-bold text-slate-400 uppercase tracking-tight">Rest Day</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="w-3 h-3 rounded-sm bg-slate-700"></span>
+                                <span class="text-[8px] md:text-[10px] font-bold text-slate-400 uppercase tracking-tight">Missed</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- UI TOAST -->
+    <div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 glass px-6 py-3 rounded-2xl border-l-4 border-sky-500 translate-y-32 transition-all duration-500 z-50 shadow-2xl">
+        <p id="toast-message" class="text-sm font-semibold tracking-tight"></p>
+    </div>
+
+    <script>
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyG3SA121lSUE765upzvNaINXzkmC1nyQvS7MS_87yWhPsomt3FqACdDGAjOsphB78cfQ/exec";
+
+        // STATE
+        let currentUser = localStorage.getItem('habitUser') || null;
+        let selectedActivityId = null;
+        let isBuzzerRunning = false;
+        let startTime = null;
+        let timerInterval = null;
+        let activities = [];
+        let currentRange = 30;
+        let customMode = false;
+
+        // INITIALIZE
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            if (currentUser) {
+                showDashboard();
+            }
+            // Set default date range (last 30 days)
+            const now = new Date();
+            const lastMonth = new Date();
+            lastMonth.setDate(now.getDate() - 30);
+            document.getElementById('end-date').value = now.toISOString().split('T')[0];
+            document.getElementById('start-date').value = lastMonth.toISOString().split('T')[0];
+        });
+
+        // VIEW HELPERS
+        async function showDashboard() {
+            document.getElementById('login-section').classList.add('hide');
+            document.getElementById('dashboard-section').classList.remove('hide');
+            document.getElementById('user-display').textContent = currentUser;
+            
+            await fetchActivities();
+            await checkActiveSession();
+            // Start with 30-day view by default
+            if (selectedActivityId) fetchLogs();
+        }
+
+        function toggleSettings() {
+            document.getElementById('settings-panel').classList.toggle('hide');
+        }
+
+        function toggleCustomRange() {}
+
+        function showToast(msg, type = 'info') {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toast-message');
+            toastMsg.textContent = msg;
+            toast.style.borderColor = type === 'error' ? '#ef4444' : '#0ea5e9';
+            toast.classList.remove('translate-y-32');
+            setTimeout(() => toast.classList.add('translate-y-32'), 3000);
+        }
+
+        // AUTH
+        async function requestOTP() {
+            const email = document.getElementById('email-input').value.trim();
+            if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) return showToast('Enter a valid email', 'error');
+
+            const btn = document.getElementById('send-otp-btn');
+            btn.disabled = true;
+            btn.innerHTML = 'Sending code...';
+
+            try {
+                const res = await apiRequest({ action: 'sendOTP', email });
+                if (res.success) {
+                    showToast('Check your email for the code');
+                    document.getElementById('otp-request').classList.add('hide');
+                    document.getElementById('otp-verify').classList.remove('hide');
+                }
+            } catch (err) {
+                showToast('Backend connection failed', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span>Get Access Code</span><i data-lucide="arrow-right" class="w-4 h-4"></i>';
+                lucide.createIcons();
+            }
+        }
+
+        async function verifyOTP() {
+            const email = document.getElementById('email-input').value.trim();
+            const otp = document.getElementById('otp-input').value.trim();
+            if (otp.length < 6) return showToast('Enter 6-digit code', 'error');
+
+            const btn = document.getElementById('verify-otp-btn');
+            btn.disabled = true;
+
+            try {
+                const res = await apiRequest({ action: 'verifyOTP', email, otp });
+                if (res.success) {
+                    currentUser = email;
+                    localStorage.setItem('habitUser', email);
+                    showDashboard();
+                } else {
+                    showToast('Invalid or expired code', 'error');
+                }
+            } catch (err) {
+                showToast('Verification failed', 'error');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function logout() {
+            if (currentUser) {
+                await apiRequest({ action: 'logout', email: currentUser });
+                localStorage.removeItem('habitUser');
+                location.reload();
+            }
+        }
+
+        // ACTIVITIES
+        async function fetchActivities() {
+            try {
+                const res = await fetch(`${WEB_APP_URL}?action=getActivities&email=${currentUser}`);
+                activities = await res.json();
+                renderActivities();
+            } catch (err) {
+                showToast('Sync failed', 'error');
+            }
+        }
+
+        function renderActivities() {
+            const list = document.getElementById('activities-list');
+            list.innerHTML = '';
+            
+            if (activities.length === 0) {
+                list.innerHTML = '<p class="text-[10px] text-slate-500 text-center py-6 uppercase tracking-widest">No habits tracking yet</p>';
+            }
+
+            activities.forEach(a => {
+                const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                const exDayIdx = a.exceptional_day !== undefined && a.exceptional_day !== 'None' ? parseInt(a.exceptional_day) : null;
+                const exDayLabel = (exDayIdx !== null && !isNaN(exDayIdx)) ? days[exDayIdx] : null;
+
+                const btn = document.createElement('button');
+                btn.className = `w-full text-left px-5 py-4 rounded-2xl transition-all flex items-center justify-between group ${selectedActivityId === a.id ? 'bg-sky-600/10 text-sky-400 border border-sky-500/30 ring-1 ring-sky-500/20' : 'hover:bg-slate-800/50 text-slate-400 border border-slate-700/50'}`;
+                btn.innerHTML = `
+                    <div class="flex flex-col">
+                        <span class="font-semibold text-sm group-hover:text-slate-300 transition-colors uppercase tracking-tight">${a.name}</span>
+                        ${exDayLabel ? `<span class="text-[8px] text-yellow-500 mt-0.5 uppercase tracking-tighter font-bold">Skip Day: ${exDayLabel}</span>` : ''}
+                    </div>
+                    <i data-lucide="chevron-right" class="w-4 h-4 opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0"></i>
+                `;
+                btn.onclick = () => selectActivity(a);
+                list.appendChild(btn);
+            });
+            lucide.createIcons();
+        }
+
+        function selectActivity(activity) {
+            if (isBuzzerRunning) return showToast('Stop current session first', 'error');
+            selectedActivityId = activity.id;
+            document.getElementById('active-habit-name').textContent = activity.name;
+            document.getElementById('buzzer-btn').disabled = false;
+            renderActivities();
+            fetchLogs();
+        }
+
+        async function createActivity() {
+            const name = document.getElementById('new-activity-name').value.trim();
+            const exDay = document.getElementById('exceptional-day-select').value;
+            if (!name) return showToast('Enter activity name', 'error');
+
+            try {
+                const res = await apiRequest({ action: 'createActivity', name, exceptional_day: exDay, email: currentUser });
+                if (res.success) {
+                    showToast('Habit Created');
+                    document.getElementById('new-activity-name').value = '';
+                    toggleSettings();
+                    await fetchActivities();
+                }
+            } catch (err) {
+                showToast('Creation failed', 'error');
+            }
+        }
+
+        // SESSIONS
+        async function checkActiveSession() {
+            try {
+                const res = await fetch(`${WEB_APP_URL}?action=checkSession&email=${currentUser}`);
+                const session = await res.json();
+                if (session && session.activity_id) {
+                    selectedActivityId = session.activity_id;
+                    const act = activities.find(a => a.id === selectedActivityId) || { name: 'Running Session' };
+                    document.getElementById('active-habit-name').textContent = act.name;
+                    document.getElementById('buzzer-btn').disabled = false;
+                    
+                    startTime = new Date(session.startTime);
+                    isBuzzerRunning = true;
+                    startBuzzerUI();
+                }
+            } catch (e) { console.error('Persistence check failed', e); }
+        }
+
+        async function toggleBuzzer() {
+            if (!isBuzzerRunning) {
+                isBuzzerRunning = true;
+                startTime = new Date();
+                startBuzzerUI();
+                await apiRequest({ action: 'logBuzzer', action_type: 'BUZZER_START', activity_id: selectedActivityId, email: currentUser });
+            } else {
+                isBuzzerRunning = false;
+                const duration = Math.floor((new Date() - startTime) / 1000);
+                stopBuzzerUI();
+                await apiRequest({ action: 'logBuzzer', action_type: 'BUZZER_STOP', activity_id: selectedActivityId, email: currentUser, duration, status: 'DONE' });
+                showToast('Activity Recorded ✓');
+                fetchLogs();
+            }
+        }
+
+        function startBuzzerUI() {
+            const btn = document.getElementById('buzzer-btn');
+            btn.classList.add('buzzer-active', 'border-sky-500');
+            document.getElementById('buzzer-status').textContent = 'Live Session';
+            document.getElementById('timer-display').classList.remove('opacity-0');
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+
+        function stopBuzzerUI() {
+            clearInterval(timerInterval);
+            document.getElementById('buzzer-btn').classList.remove('buzzer-active', 'border-sky-500');
+            document.getElementById('buzzer-status').textContent = 'Start Session';
+            document.getElementById('timer-display').classList.add('opacity-0');
+        }
+
+        function updateTimer() {
+            const diff = Math.floor((new Date() - startTime) / 1000);
+            const m = Math.floor(diff / 60).toString().padStart(2, '0');
+            const s = (diff % 60).toString().padStart(2, '0');
+            document.getElementById('timer-display').textContent = `${m}:${s}`;
+        }
+
+        // VISUALIZER
+        async function fetchLogs() {
+            if (!selectedActivityId) return;
+            try {
+                const res = await fetch(`${WEB_APP_URL}?action=getLogs&activity_id=${selectedActivityId}&email=${currentUser}`);
+                const logs = await res.json();
+                renderChain(logs);
+            } catch (err) { console.error(err); }
+        }
+
+        function setChainRange(days) {
+            currentRange = days;
+            customMode = false;
+            document.querySelectorAll('.range-btn').forEach(b => {
+                const bDays = parseInt(b.textContent);
+                b.className = (bDays === days) ? 'range-btn active px-3 py-1 text-[10px] font-bold rounded-lg border border-sky-500 bg-sky-500/10 text-sky-400 transition-all uppercase' : 'range-btn px-3 py-1 text-[10px] font-bold rounded-lg border border-slate-700 hover:border-sky-500/50 transition-all uppercase';
+            });
+            fetchLogs();
+        }
+
+
+
+        function renderChain(logs = []) {
+            const grid = document.getElementById('chain-grid');
+            grid.innerHTML = '';
+            
+            const now = new Date();
+            const logDates = new Set(logs.map(l => new Date(l.timestamp).toDateString()));
+            const activity = activities.find(a => a.id === selectedActivityId);
+            
+            let daysToRender = currentRange;
+            let startDate = new Date();
+            
+            if (customMode) {
+                const d1 = new Date(document.getElementById('start-date').value);
+                const d2 = new Date(document.getElementById('end-date').value);
+                daysToRender = Math.floor((d2 - d1) / (1000 * 3600 * 24)) + 1;
+                startDate = d2;
+            }
+
+            let streak = 0;
+            let streakBroken = false;
+
+            for (let i = 0; i < daysToRender; i++) {
+                const date = new Date(startDate);
+                date.setDate(startDate.getDate() - i);
+                const dateStr = date.toDateString();
+                const isLogged = logDates.has(dateStr);
+                const exDayIdx = (activity && activity.exceptional_day !== undefined && activity.exceptional_day !== 'None') ? parseInt(activity.exceptional_day) : null;
+                const isExDay = exDayIdx !== null && !isNaN(exDayIdx) && date.getDay() === exDayIdx;
+
+                const box = document.createElement('div');
+                box.className = `chain-box ${isLogged ? 'active' : (isExDay ? 'exceptional' : 'empty')} flex flex-col items-center justify-center select-none p-1`;
+                box.style.color = isLogged ? '#ffffff' : (isExDay ? '#000000' : '#94a3b8');
+                
+                const monthNames = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+                box.innerHTML = `
+                    <span class="text-[13px] font-bold leading-none">${date.getDate()}</span>
+                    <span class="text-[9px] opacity-70 font-semibold tracking-tight">${monthNames[date.getMonth()]}</span>
+                `;
+                
+                const tooltip = document.createElement('span');
+                tooltip.className = 'date-tooltip';
+                tooltip.textContent = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                box.appendChild(tooltip);
+
+                if (isLogged && !streakBroken) streak++;
+                else if (i > 0 && !isLogged && !isExDay) streakBroken = true;
+
+                grid.insertBefore(box, grid.firstChild);
+            }
+            document.getElementById('streak-counter').textContent = `${streak} Day Streak`;
+        }
+
+        // UTILS
+        async function apiRequest(body) {
+            try {
+                const res = await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify(body)
+                });
+                const txt = await res.text();
+                try { return JSON.parse(txt); } catch(e) { return { success: true }; }
+            } catch (e) { return { success: true }; }
+        }
+    </script>
+</body>
+</html>
