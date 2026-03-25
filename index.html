@@ -408,7 +408,7 @@
                 </button>
                 <button onclick="switchView('friends')" class="menu-action w-full rounded-2xl px-4 py-4 text-left text-sm text-slate-200 transition hover:bg-slate-800/60">
                     <span class="font-semibold">Friends Progress</span>
-                    <span class="block text-xs text-slate-500 mt-1">Share invites and view your circle in read-only mode</span>
+                    <span class="block text-xs text-slate-500 mt-1">Share invites and view your circle</span>
                 </button>
             </div>
         </div>
@@ -572,6 +572,10 @@
                     <div class="rounded-2xl border border-slate-700/70 bg-slate-900/35 p-4">
                         <p class="text-[10px] uppercase tracking-[0.3em] text-slate-500">Your Referral Code</p>
                         <div id="referral-code-display" class="mt-2 text-2xl font-bold tracking-[0.25em] text-sky-300">------</div>
+                        <button onclick="shareReferral()" id="friends-share-referral-btn" data-base-html="Invite Friends"
+                            class="mt-5 w-full rounded-xl bg-sky-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-sky-500">
+                            Invite Friends
+                        </button>
                     </div>
                 </div>
 
@@ -591,8 +595,9 @@
                 <div class="glass p-6 rounded-3xl">
                     <div class="flex items-center justify-between mb-4">
                         <div>
-                            <p class="text-[10px] uppercase tracking-[0.3em] text-slate-500">Friends Progress</p>
+                            <p class="text-[10px] uppercase tracking-[0.3em] text-slate-500">Circle</p>
                             <h3 class="text-xl font-bold mt-2">Your Circle</h3>
+                            <p class="text-sm text-slate-400 mt-2">Choose a friend to explore their streaks</p>
                         </div>
                         <button onclick="loadFriends(true)" class="rounded-xl border border-slate-700/70 p-2 text-slate-400 transition hover:border-sky-500/40 hover:text-sky-300">
                             <i data-lucide="refresh-cw" class="w-4 h-4"></i>
@@ -607,9 +612,9 @@
 
             <section class="glass p-6 md:p-8 rounded-3xl min-h-[520px]">
                 <div id="friend-dashboard-empty" class="h-full flex flex-col justify-center items-center text-center">
-                    <p class="text-[10px] uppercase tracking-[0.35em] text-slate-500">Friends Progress</p>
-                    <h3 class="text-3xl font-bold tracking-tight mt-4">Choose a friend to explore their streaks</h3>
-                    <p class="text-sm text-slate-400 mt-3 max-w-md">This dashboard is read-only. You’ll see each habit, recent completion calendar, and streak momentum when your invited friends choose to share.</p>
+                    <p class="text-[10px] uppercase tracking-[0.35em] text-slate-500">Your Circle</p>
+                    <h3 class="text-3xl font-bold tracking-tight mt-4">Friend dashboard will appear here</h3>
+                    <p class="text-sm text-slate-400 mt-3 max-w-md">Pick someone from your circle to open their latest habit streaks and calendar.</p>
                 </div>
                 <div id="friend-dashboard-content" class="hide"></div>
             </section>
@@ -622,7 +627,7 @@
     </div>
 
     <script>
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwVjj3HA5JEZsygy3MePvVLKxiBCz568cCZFzL2PbO1ttGw1I32Ix7f0wx1K9kjcZuVKQ/exec";
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwG5xb5_wqlyFv6QQkRSGUbP7TeuMfIAKPYeO_qjQqPrA4P2j-0ZKRfAzLKBdBhVFg_Gg/exec";
         const CTA_COOLDOWN_MS = 12000;
         const REFERRAL_STORAGE_KEY = 'habitReferralCodes';
         const PROFILE_STORAGE_KEY = 'habitUserProfile';
@@ -1343,7 +1348,6 @@
 
             const selectedHabit = habits.find(habit => habit.id === selectedFriendHabitId) || habits[0];
             const streak = calculateStreak(selectedHabit.logs || [], selectedHabit.exceptional_day);
-            const sessions = (selectedHabit.logs || []).length;
             const selectorDisabled = habits.length <= 1 ? 'disabled' : '';
 
             content.innerHTML = `
@@ -1370,10 +1374,6 @@
                                 </select>
                             </div>
                             <div class="flex flex-wrap gap-3">
-                                <div class="rounded-2xl border border-slate-700/70 bg-slate-950/30 px-4 py-3">
-                                    <p class="text-[10px] uppercase tracking-[0.22em] text-slate-500">Sessions</p>
-                                    <p class="text-lg font-bold text-slate-100 mt-1">${sessions}</p>
-                                </div>
                                 <div class="rounded-2xl border border-sky-500/25 bg-sky-500/10 px-4 py-3">
                                     <p class="text-[10px] uppercase tracking-[0.22em] text-sky-300">Current Streak</p>
                                     <p class="text-lg font-bold text-sky-100 mt-1">${streak} days</p>
@@ -1461,13 +1461,16 @@
             return streak;
         }
 
-        async function shareReferral() {
+        async function shareReferral(buttonEl = null) {
             if (!currentProfile?.referral_code) {
                 showToast('Referral code is still loading', 'error');
                 return;
             }
 
-            const btn = document.getElementById('share-referral-btn');
+            const activeButton = buttonEl
+                || (document.activeElement instanceof HTMLButtonElement ? document.activeElement : null)
+                || document.getElementById('share-referral-btn');
+            const btn = activeButton;
             const url = buildReferralUrl();
             const text = `I’m building better habits daily.\nJoin me and track your progress too:\n${url}`;
 
