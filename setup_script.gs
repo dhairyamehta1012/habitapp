@@ -32,6 +32,10 @@ function resetDB() {
   setupDB();
 }
 
+function checkAliases() {
+  Logger.log(GmailApp.getAliases());
+}
+
 function doPost(e) {
   ensureDbSchema();
 
@@ -79,15 +83,18 @@ function doPost(e) {
     `;
 
     try {
-      MailApp.sendEmail({
-        to: email,
-        from: 'hi@dhairyamehta.in',
-        name: 'HabitApp',
-        subject: `Access Code - ${otp}`,
-        htmlBody
-      });
+      GmailApp.sendEmail(
+        email,
+        `Your Login OTP - ${otp}`,
+        `Your OTP is ${otp}`,
+        {
+          from: 'info@dhairyamehta.in',
+          name: 'HabitApp by Dhairya Mehta',
+          htmlBody: htmlBody
+        }
+      );
     } catch (err) {
-      console.warn('MailApp failed', err);
+      console.error('Email sending failed:', err);
     }
 
     return jsonResponse({ success: true });
