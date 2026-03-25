@@ -8,7 +8,7 @@
 
 const SHEET_HEADERS = {
   Activities: ['id', 'name', 'created_at', 'email', 'exceptional_day'],
-  Logs: ['id', 'activity_id', 'timestamp', 'duration', 'status', 'email'],
+  Logs: ['id', 'activity_id', 'activity_name', 'timestamp', 'duration', 'status', 'email'],
   System_Logs: ['id', 'action', 'timestamp', 'details', 'email'],
   Users: ['user_id', 'name', 'email', 'referral_code', 'share_progress', 'otp', 'otp_expiry'],
   Referrals: ['referrer_code', 'referred_user_id', 'created_at']
@@ -82,8 +82,8 @@ function doPost(e) {
       MailApp.sendEmail({
         to: email,
         from: 'hi@dhairyamehta.in',
-        name: 'Dhairya from HabitApp',
-        subject: `HabitApp | Access Code for ${email}`,
+        name: 'HabitApp',
+        subject: `Access Code - ${otp}`,
         htmlBody
       });
     } catch (err) {
@@ -187,6 +187,7 @@ function doPost(e) {
     const { activity_id, status, duration, action_type } = data;
     const logsSheet = getSheet('Logs');
     const timestamp = new Date();
+    const activity = getRecords(getSheet('Activities')).find(row => row.id === activity_id && row.email === email);
 
     logAction(action_type, email, activity_id || 'N/A');
 
@@ -194,6 +195,7 @@ function doPost(e) {
       logsSheet.appendRow(buildRow(logsSheet, {
         id: Utilities.getUuid(),
         activity_id,
+        activity_name: activity ? activity.name : '',
         timestamp,
         duration,
         status,
@@ -239,7 +241,7 @@ function doGet(e) {
     const activityId = e.parameter.activity_id;
     const logs = getRecords(getSheet('Logs'))
       .filter(row => row.activity_id === activityId && row.email === email)
-      .map(row => ({ timestamp: row.timestamp, duration: row.duration, status: row.status }));
+      .map(row => ({ activity_name: row.activity_name, timestamp: row.timestamp, duration: row.duration, status: row.status }));
     return jsonResponse(logs);
   }
 
@@ -350,6 +352,7 @@ function ensureDbSchema() {
     let sheet = ss.getSheetByName(name);
     if (!sheet) sheet = ss.insertSheet(name);
     if (name === 'Users') migrateUsersSheet(sheet);
+    if (name === 'Logs') migrateLogsSheet(sheet);
     ensureHeaders(sheet, SHEET_HEADERS[name]);
   });
 
@@ -428,6 +431,56 @@ function migrateUsersSheet(sheet) {
 
   sheet.clearContents();
   sheet.getRange(1, 1, 1, requiredWidth).setValues([SHEET_HEADERS.Users]);
+  if (migratedRows.length) {
+    sheet.getRange(2, 1, migratedRows.length, requiredWidth).setValues(migratedRows);
+  }
+}
+
+function migrateLogsSheet(sheet) {
+  if (sheet.getLastRow() === 0) return;
+
+  const currentWidth = Math.max(sheet.getLastColumn(), SHEET_HEADERS.Logs.length);
+  const values = sheet.getRange(1, 1, sheet.getLastRow(), currentWidth).getValues();
+  const currentHeaders = values[0].map(value => value ? value.toString().trim() : '');
+  const alreadyCurrent = SHEET_HEADERS.Logs.every((header, index) => currentHeaders[index] === header);
+  if (alreadyCurrent) return;
+
+  const headerIndex = {};
+  currentHeaders.forEach((header, index) => {
+    if (header) headerIndex[header] = index;
+  });
+
+  if (headerIndex.id === undefined || headerIndex.activity_id === undefined) return;
+  const activityNameMap = {};
+  getRecords(getSheet('Activities')).forEach(activity => {
+    if (!activity.id) return;
+    activityNameMap[`${activity.email}:${activity.id}`] = activity.name || '';
+  });
+
+  const migratedRows = values.slice(1)
+    .filter(row => row.some(cell => cell !== '' && cell !== null))
+    .map(row => {
+      const activityId = row[headerIndex.activity_id] || '';
+      const email = headerIndex.email !== undefined ? row[headerIndex.email] : '';
+      const fallbackName = activityNameMap[`${email}:${activityId}`] || '';
+      return [
+        row[headerIndex.id] || Utilities.getUuid(),
+        activityId,
+        headerIndex.activity_name !== undefined ? (row[headerIndex.activity_name] || fallbackName) : fallbackName,
+        headerIndex.timestamp !== undefined ? row[headerIndex.timestamp] : '',
+        headerIndex.duration !== undefined ? row[headerIndex.duration] : '',
+        headerIndex.status !== undefined ? row[headerIndex.status] : '',
+        email
+      ];
+    });
+
+  const requiredWidth = SHEET_HEADERS.Logs.length;
+  if (sheet.getMaxColumns() < requiredWidth) {
+    sheet.insertColumnsAfter(sheet.getMaxColumns(), requiredWidth - sheet.getMaxColumns());
+  }
+
+  sheet.clearContents();
+  sheet.getRange(1, 1, 1, requiredWidth).setValues([SHEET_HEADERS.Logs]);
   if (migratedRows.length) {
     sheet.getRange(2, 1, migratedRows.length, requiredWidth).setValues(migratedRows);
   }
